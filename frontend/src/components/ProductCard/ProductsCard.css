@@ -1,0 +1,108 @@
+/* Main product container */
+.product-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  margin-bottom: 15px; /* Add margin for spacing between product containers */
+}
+
+/* Product details container */
+.product-details {
+  flex: 1;
+  margin-right: 20px;
+}
+
+/* Product actions container */
+.product-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Space between the buttons */
+}
+
+/* Quantity button styling */
+.quantity-button {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  background-color: #f1f1f1;
+}
+
+/* Quantity input field */
+.quantity-input {
+  width: 40px;
+  text-align: center;
+  padding: 5px;
+  border: 1px solid #ddd;
+}
+
+/* Add to cart button */
+.add-to-cart-button {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.add-to-cart-button:hover {
+  background-color: #45a049;
+  transform: scale(1.05);
+}
+
+/* Responsive for tablet screens */
+@media (max-width: 768px) {
+  .product-container {
+    flex-direction: column; /* Stack the product details and actions vertically */
+    align-items: flex-start; /* Align items to the left */
+    padding: 15px;
+  }
+
+  .product-details {
+    margin-right: 0; /* Remove margin between details and actions */
+    margin-bottom: 15px; /* Add spacing between details and actions */
+  }
+
+  .product-actions {
+    width: 100%; /* Make the action buttons take the full width */
+    justify-content: space-between; /* Spread the buttons apart */
+  }
+
+  .add-to-cart-button {
+    width: 100%; /* Full-width button for tablets */
+    padding: 12px 0;
+  }
+}
+
+/* Responsive for mobile screens */
+@media (max-width: 576px) {
+  .product-container {
+    flex-direction: column; /* Stack items vertically on mobile */
+    padding: 10px;
+  }
+
+  .product-details {
+    margin-bottom: 10px; /* Space between details and actions */
+  }
+
+  .product-actions {
+    flex-direction: column; /* Stack buttons vertically */
+    width: 100%;
+  }
+
+  .quantity-button,
+  .quantity-input {
+    width: 100%; /* Full width for buttons and input on mobile */
+    margin-bottom: 10px; /* Space between buttons */
+  }
+
+  .add-to-cart-button {
+    width: 100%; /* Full-width add to cart button */
+    padding: 12px;
+    font-size: 1rem; /* Adjust font size for mobile */
+  }
+}
