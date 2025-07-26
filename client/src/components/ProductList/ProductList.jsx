@@ -178,7 +178,7 @@ const ProductList = () => {
                     <div key={product._id} className="card product-card">
                       <div onClick={() => handleDetails(product._id)}>
                         <img
-                          src={`http://localhost:5001${product.imageUrl}`}
+                          src={`http://farmley-backend-1.onrender.com${product.imageUrl}`}
                           className="card-img-top product-image"
                           alt={product.name}
                           style={{

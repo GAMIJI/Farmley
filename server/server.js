@@ -46,6 +46,13 @@ mongoose.connect(dbURL, { useNewUrlParser: true, useUnifiedTopology: true })
 app.use(passport.initialize());
 require("./config/passport")(passport);
 
+
+// Inside server.js or app.js
+app.get("/api/test", (req, res) => {
+  res.json({ message: "Backend is working ✅" });
+});
+
+
 // ✅ API Routes
 app.use("/api/user", userRoutes);
 app.use("/api/products", productRoutes);
@@ -53,13 +60,13 @@ app.use("/api/cart",cartRoutes)
 app.use("/api/order",Order)
 
 // ✅ Serve Frontend in Production
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "client", "build")));
+// if (process.env.NODE_ENV === "production") {
+//   app.use(express.static(path.join(__dirname, "client", "build")));
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "client", "build", "index.html"));
-  });
-}
+//   app.get("*", (req, res) => {
+//     res.sendFile(path.join(__dirname, "client", "build", "index.html"));
+//   });
+// }
 
 // ✅ Global Error Handling Middleware
 app.use((err, req, res, next) => {
@@ -68,5 +75,6 @@ app.use((err, req, res, next) => {
 });
 
 // ✅ Start Server
-const port =  5001;
+const port = process.env.PORT || 5001;
+
 app.listen(port,() => console.log(`🚀 Server running on port ${port}`));
