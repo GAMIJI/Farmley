@@ -17,14 +17,22 @@ const ProductList = () => {
     const fetchProducts = async () => {
       try {
         const response = await API.get("/products");
-        console.log("✅ products API response:", response.data);
-        setProducts(response.data); // Make sure it's an array
+        console.log("✅ Response:", response.data);
+
+        if (Array.isArray(response.data)) {
+          setProducts(response.data);
+        } else {
+          console.error("🚨 Unexpected response data:", response.data);
+          setProducts([]); // prevent crash
+        }
       } catch (error) {
         console.error("❌ Error fetching products:", error);
+        setProducts([]); // prevent crash
       } finally {
         setLoading(false);
       }
     };
+
 
 
     fetchProducts();
