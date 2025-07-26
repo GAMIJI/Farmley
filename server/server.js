@@ -25,11 +25,11 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS
 ];
 
 app.use(cors({
-  origin: ["https://farmley-git-main-mohit-gamis-projects.vercel.app"],
+  origin: "*", // ✅ Allow all origins
   methods: "GET,POST,PUT,DELETE",
-  allowedHeaders: "Content-Type,Authorization",
-  credentials: true
+  allowedHeaders: "Content-Type,Authorization"
 }));
+
 
 // ✅ Serve Static Files (Profile Images, etc.)
 app.use("/uploads", express.static("uploads"));
