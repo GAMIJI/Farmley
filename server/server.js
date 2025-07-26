@@ -19,10 +19,15 @@ const allowedOrigins = [
 
 // ✅ Allow All Origins - For Development Only
 app.use(cors({
-  origin: true, // dynamically reflect request origin
-  credentials: true,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed for: " + origin));
+    }
+  },
+  credentials: true
 }));
-
 
 
 // ✅ Body Parser Middleware

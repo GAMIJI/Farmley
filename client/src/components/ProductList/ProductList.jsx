@@ -16,7 +16,7 @@ const ProductList = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await API.get("/products");
+        const response = await API.get("/products/");
         console.log("✅ Response:", response.data);
 
         if (Array.isArray(response.data)) {
