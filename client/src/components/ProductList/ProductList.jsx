@@ -91,16 +91,16 @@ const ProductList = () => {
     }
   };
 
-  // const filteredProducts = products.filter((product) =>
-  //   product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  // );
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  // const groupedByCategory = filteredProducts.reduce((acc, product) => {
-  //   const category = product.category || "Uncategorized";
-  //   if (!acc[category]) acc[category] = [];
-  //   acc[category].push(product);
-  //   return acc;
-  // }, {});
+  const groupedByCategory = filteredProducts.reduce((acc, product) => {
+    const category = product.category || "Uncategorized";
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(product);
+    return acc;
+  }, {});
 
   return (
     <div className="container mt-3">
@@ -156,7 +156,7 @@ const ProductList = () => {
       {loading ? (
         <div className="text-center">Loading products...</div>
       ) : (
-        Object.entries(groupedByCategory).map(([categoryName, items]) => (
+        Object.entries(products).map(([categoryName, items]) => (
           <div key={categoryName} className="mb-4">
             <h3 className="mb-2 h5">{categoryName}</h3>
 
