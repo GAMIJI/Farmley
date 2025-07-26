@@ -28,7 +28,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS
 app.use(cors({
   origin: [
     "http://localhost:3000",
-    "https://farmley-git-main-mohit-gamis-projects.vercel.app",
+    "https://farmley-git-main-mohit-gamis-projects.vercel.app/",
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
