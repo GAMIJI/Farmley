@@ -24,17 +24,18 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS
   "http://192.168.29.119:5000"
 ];
 
+// ✅ CORS Configuration
 app.use(cors({
   origin: [
-    "http://localhost:3000", // local dev
-    "https://farmley-git-main-mohit-gamis-projects.vercel.app", // vercel frontend
+    "http://localhost:3000", // Local Dev
+    "https://farmley-git-main-mohit-gamis-projects.vercel.app", // Vercel Frontend
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
+  credentials: true
 }));
 
-
+// ✅ Set Additional Headers (Optional but Safe)
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Credentials", "true");
   next();
