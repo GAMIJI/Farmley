@@ -9,8 +9,8 @@ const path = require("path");
 // Import Routes
 const userRoutes = require("./routes/api/user.js");
 const productRoutes = require("./routes/api/Product.js");
-const cartRoutes = require("./routes/api/cartRoutes.js") 
-const Order = require("./routes/api/Order.js") 
+const cartRoutes = require("./routes/api/cartRoutes.js")
+const Order = require("./routes/api/Order.js")
 const app = express();
 const host = '192.168.29.119'; // Your machine's local IP
 
@@ -25,7 +25,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS
 ];
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: ["https://farmley-git-main-mohit-gamis-projects.vercel.app"],
   methods: "GET,POST,PUT,DELETE",
   allowedHeaders: "Content-Type,Authorization",
   credentials: true
@@ -56,8 +56,8 @@ app.get("/api/test", (req, res) => {
 // ✅ API Routes
 app.use("/api/user", userRoutes);
 app.use("/api/products", productRoutes);
-app.use("/api/cart",cartRoutes)
-app.use("/api/order",Order)
+app.use("/api/cart", cartRoutes)
+app.use("/api/order", Order)
 
 // ✅ Serve Frontend in Production
 // if (process.env.NODE_ENV === "production") {
@@ -77,4 +77,4 @@ app.use((err, req, res, next) => {
 // ✅ Start Server
 const port = process.env.PORT || 5001;
 
-app.listen(port,() => console.log(`🚀 Server running on port ${port}`));
+app.listen(port, () => console.log(`🚀 Server running on port ${port}`));

@@ -4,7 +4,7 @@ const baseURL = process.env.REACT_APP_API_BASE_URL
 
 // Create an Axios instance
 const API = axios.create({
-  baseURL: baseURL || "http://farmley-backend-1.onrender.com/api/" // Base URL for your backend API
+  baseURL: baseURL || "https://farmley-backend-1.onrender.com/api/" // Base URL for your backend API
 });
 
 // Add a request interceptor to include token automatically
