@@ -24,12 +24,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS
   "http://192.168.29.119:5000"
 ];
 
-app.use(cors({
-  origin: "https://farmley-git-main-mohit-gamis-projects.vercel.app", // ✅ allow frontend
-  methods: "GET,POST,PUT,DELETE",
-  allowedHeaders: "Content-Type,Authorization",
-  // credentials: true // ✅ only works with specific origin
-}));
+app.use(cors());
 
 
 // ✅ Serve Static Files (Profile Images, etc.)
