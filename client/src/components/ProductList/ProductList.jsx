@@ -156,7 +156,7 @@ const ProductList = () => {
       {loading ? (
         <div className="text-center">Loading products...</div>
       ) : (
-        Object.entries(products).map(([categoryName, items]) => (
+        Object.entries(groupedByCategory).map(([categoryName, items]) => (
           <div key={categoryName} className="mb-4">
             <h3 className="mb-2 h5">{categoryName}</h3>
 
