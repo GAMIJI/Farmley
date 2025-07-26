@@ -17,30 +17,21 @@ const allowedOrigins = [
   "https://farmley-git-main-mohit-gamis-projects.vercel.app"
 ];
 
-// ✅ CORS Middleware
+// ✅ Allow All Origins - For Development Only
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin like mobile apps or curl
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS: " + origin));
-    }
-  },
+  origin: true, // dynamically reflect request origin
   credentials: true,
 }));
 
-// ✅ Set custom headers (important for preflight requests)
+// ✅ Set Headers Manually (Optional, but useful for full control)
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
+  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   next();
 });
+
 
 // ✅ Body Parser Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
