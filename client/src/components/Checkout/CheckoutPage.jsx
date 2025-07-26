@@ -88,7 +88,7 @@ console.log("Cart items passed to checkout:", rawItems);
                 status: 'pending'
             };
 
-            const response = await axios.post('http://localhost:5001/api/order/checkout', orderData);
+            const response = await axios.post('http://:5001/api/order/checkout', orderData);
 
             if (response.data.success) {
                 setOrderSuccess(true);
@@ -319,7 +319,7 @@ console.log("Cart items passed to checkout:", rawItems);
                                             <div style={styles.itemImageContainer}>
                                                 <img
                                                     // src={`${API}/${item.image}`}
-                                                      src={`http://localhost:5001${item.imageUrl}`}
+                                                      src={`http://farmley-backend-1.onrender.com${item.imageUrl}`}
                                                     alt={item.name}
                                                     style={styles.itemImage}
                                                     onError={(e) => {

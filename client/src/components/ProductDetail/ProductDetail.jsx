@@ -80,7 +80,7 @@ const ProductDetail = () => {
       <div className="row">
         <div className="col-md-6 mb-4">
           <img
-            src={product.imageUrl ? `http://localhost:5001${product.imageUrl}` : '/default-image.jpg'}
+            src={product.imageUrl ? `http://farmley-backend-1.onrender.com${product.imageUrl}` : '/default-image.jpg'}
             alt={product.name}
             className="img-fluid rounded mb-3 product-image"
             style={{ maxHeight: '400px', objectFit: 'contain' }}
@@ -148,7 +148,7 @@ const ProductDetail = () => {
                   onClick={() => handleProductClick(rp._id)}
                 >
                   <img
-                    src={rp.imageUrl ? `http://localhost:5001${rp.imageUrl}` : '/default-image.jpg'}
+                    src={rp.imageUrl ? `http://farmley-backend-1.onrender.com${rp.imageUrl}` : '/default-image.jpg'}
                     className="related-img mb-2"
                     alt={rp.name}
                     style={{

@@ -113,7 +113,7 @@ const Cart = () => {
                 item.productId && (
                   <CartItem key={item._id}>
                     <ProductImage
-                      src={`http://localhost:5001${item.productId.imageUrl}`}
+                      src={`http://farmley-backend-1.onrender.com${item.productId.imageUrl}`}
                       alt={item.productId.name}
                     />
                     <ProductDetails>

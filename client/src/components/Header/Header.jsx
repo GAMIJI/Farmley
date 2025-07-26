@@ -125,7 +125,7 @@ const Header = () => {
               <div className="dropdown">
                 <a className="dropdown-toggle d-flex align-items-center hidden-arrow" href="#" role="button" data-bs-toggle="dropdown">
                   <img
-                    src={user?.profileImage ? `http://localhost:5001${user.profileImage}` : fallbackImage}
+                    src={user?.profileImage ? `http://farmley-backend-1.onrender.com${user.profileImage}` : fallbackImage}
                     className="rounded-circle"
                     height={25}
                     alt="User Avatar"
@@ -176,7 +176,7 @@ const Header = () => {
               <div className="dropdown">
                 <a className="dropdown-toggle d-flex align-items-center hidden-arrow" href="#" role="button" data-bs-toggle="dropdown">
                   <img
-                    src={user?.profileImage ? `http://localhost:5001${user.profileImage}` : fallbackImage}
+                    src={user?.profileImage ? `http://farmley-backend-1.onrender.com${user.profileImage}` : fallbackImage}
                     className="rounded-circle"
                     height={25}
                     alt="User Avatar"
