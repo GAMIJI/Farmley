@@ -28,7 +28,7 @@ app.use(cors({
   origin: "https://farmley-git-main-mohit-gamis-projects.vercel.app", // ✅ allow frontend
   methods: "GET,POST,PUT,DELETE",
   allowedHeaders: "Content-Type,Authorization",
-  credentials: true // ✅ only works with specific origin
+  // credentials: true // ✅ only works with specific origin
 }));
 
 
