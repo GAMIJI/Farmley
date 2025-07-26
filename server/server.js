@@ -27,19 +27,22 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS
 // ✅ CORS Configuration
 app.use(cors({
   origin: [
-    "http://localhost:3000", // Local Dev
-    "https://farmley-git-main-mohit-gamis-projects.vercel.app", // Vercel Frontend
+    "http://localhost:3000",
+    "https://farmley-git-main-mohit-gamis-projects.vercel.app",
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
 
+
 // ✅ Set Additional Headers (Optional but Safe)
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Credentials", "true");
+ res.header("Access-Control-Allow-Credentials", "true");
   next();
 });
+
+app.options("*", cors())
 
 
 // ✅ Serve Static Files (Profile Images, etc.)
