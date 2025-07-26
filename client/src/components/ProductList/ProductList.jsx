@@ -17,13 +17,15 @@ const ProductList = () => {
     const fetchProducts = async () => {
       try {
         const response = await API.get("/products");
-        setProducts(response.data);
+        console.log("✅ products API response:", response.data);
+        setProducts(response.data); // Make sure it's an array
       } catch (error) {
-        console.error("Error fetching products:", error);
+        console.error("❌ Error fetching products:", error);
       } finally {
         setLoading(false);
       }
     };
+
 
     fetchProducts();
     fetchCartItems(); // load cart from backend
