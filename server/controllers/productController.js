@@ -6,7 +6,7 @@ const getProducts = async (req, res) => {
     const products = await Product.find(); // Fetch all products from MongoDB
     res.json(products);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: 'Server error product do not fetch' });
   }
 };
 

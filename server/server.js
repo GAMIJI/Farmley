@@ -11,24 +11,27 @@ const app = express();
 // ✅ MongoDB URI
 const dbURL = process.env.MONGODB_URI || "mongodb+srv://Farmley_db:Farmley_9575@farmley.roovp.mongodb.net/?retryWrites=true&w=majority&appName=Farmley";
 
-// ✅ Allowed origins
+
+
 const allowedOrigins = [
-  "http://localhost:3000",
-  "https://farmley-git-main-mohit-gamis-projects.vercel.app"
+  "https://localhost:5000",
+  "https://farmley-phi.vercel.app"
 ];
 
-// ✅ Allow All Origins - For Development Only
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error("CORS not allowed for: " + origin));
+      callback(new Error("Not allowed by CORS"));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
+app.options("*", cors()); // ✅ handles preflight
 
 // ✅ Body Parser Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -65,10 +68,10 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/order", orderRoutes);
 
 // ✅ Global Error Handler
-app.use((err, req, res, next) => {
-  console.error("🔥 [ERROR]:", err.stack);
-  res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
-});
+// app.use((err, req, res, next) => {
+//   console.error("🔥 [ERROR]:", err.stack);
+//   res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
+// });
 
 // ✅ Start Server
 const PORT = process.env.PORT || 5001;
