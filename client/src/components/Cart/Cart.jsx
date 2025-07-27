@@ -100,7 +100,7 @@ const Cart = () => {
        <CartItems>
           {cart.length === 0 ? (
             <EmptyCart>
-              <img src="https://w7.pngwing.com/pngs/432/660/png-transparent-empty-cart-illustration.png" alt="Empty cart" />
+              <FiShoppingBag />
               <h3>Your cart is empty</h3>
               <p>Looks like you haven't added anything to your cart yet</p>
               <Link to="/ProductsPage" className="cta-button">
