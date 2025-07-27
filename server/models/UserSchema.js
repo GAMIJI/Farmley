@@ -11,10 +11,10 @@ const UserSchema = new Schema({
     type: String,
     required: true
   },
-  address: {
-    type: String,
-    required: false
-  },
+  // address: {
+  //   type: String,
+  //   required: false
+  // },
   mobile: {
     type: Number,
     required: false

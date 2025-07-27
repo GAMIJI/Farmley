@@ -265,7 +265,7 @@ const Profile = () => {
             src={
               userData.profileImage instanceof File
                 ? URL.createObjectURL(userData.profileImage)
-                : `http://farmley-backend-1.onrender.com${userData.profileImage}`
+                : `http://farmley-backend-1.onrender.com/${userData.profileImage}`
             }
             alt="Profile"
             style={styles.profileImage}
