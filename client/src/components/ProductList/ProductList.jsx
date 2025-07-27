@@ -43,8 +43,8 @@ const ProductList = () => {
     const userId = localStorage.getItem("userData");
     const token = localStorage.getItem("token");
 
-    console.log("dfvbyudfj",token);
-    
+    console.log("dfvbyudfj", token);
+
 
     if (!userId || !token) return;
 
@@ -60,8 +60,9 @@ const ProductList = () => {
 
   const handleCart = async (_id) => {
     const userId = localStorage.getItem("userData");
+    const token = localStorage.getItem("token");
 
-    if (!userId) {
+    if (!userId || !token) {
       alert("Please login to add items to cart");
       return navigate("/login");
     }
@@ -71,13 +72,21 @@ const ProductList = () => {
     setClickedItems((prev) => ({ ...prev, [_id]: true }));
 
     try {
-      await API.post("/cart/add", {
-        userId,
-        productId: _id,
-        quantity: 1,
-      });
+      await API.post(
+        "/cart/add",
+        {
+          userId,
+          productId: _id,
+          quantity: 1,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ Include token here
+          },
+        }
+      );
 
-      await fetchCartItems(); // update UI with latest cart
+      await fetchCartItems(); // Refresh cart items
     } catch (error) {
       console.error("Error adding to cart:", error);
       alert("Something went wrong while adding to cart.");
