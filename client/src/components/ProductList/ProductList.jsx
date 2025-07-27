@@ -43,7 +43,7 @@ const ProductList = () => {
     const userId = localStorage.getItem("userData");
     const token = localStorage.getItem("token");
 
-    console.log(token);
+    console.log("dfvbyudfj",token);
     
 
     if (!userId || !token) return;
