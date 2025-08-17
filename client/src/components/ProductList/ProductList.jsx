@@ -86,14 +86,14 @@ const ProductList = () => {
   const scrollSlider = (category, direction) => {
     const slider = sliderRefs.current[category];
     if (slider) {
+      const scrollAmount = direction === "right" ? 300 : -300;
       slider.scrollBy({
-        left: direction === "right" ? 300 : -300,
+        left: scrollAmount,
         behavior: "smooth",
       });
     }
   };
 
-  // Filter and group products
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -105,7 +105,6 @@ const ProductList = () => {
     return acc;
   }, {});
 
-  // Generate random ratings
   const generateRating = () => {
     const rating = (Math.random() * 5).toFixed(1);
     return {
@@ -136,6 +135,7 @@ const ProductList = () => {
                 placeholder="Search for products, brands, and more..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="Search products"
               />
               <button type="submit">
                 Search
@@ -156,89 +156,104 @@ const ProductList = () => {
           <div key={category} className="product-category-section">
             <div className="category-header">
               <h2>{category}</h2>
-              <div className="slider-controls">
-                <button onClick={() => scrollSlider(category, "left")}>
-                  &larr;
-                </button>
-                <button onClick={() => scrollSlider(category, "right")}>
-                  &rarr;
-                </button>
-              </div>
+              {items.length > 2 && (
+                <div className="slider-controls">
+                  <button 
+                    className="slider-arrow left" 
+                    onClick={() => scrollSlider(category, "left")}
+                    aria-label={`Scroll ${category} left`}
+                  >
+                    &larr;
+                  </button>
+                  <button 
+                    className="slider-arrow right" 
+                    onClick={() => scrollSlider(category, "right")}
+                    aria-label={`Scroll ${category} right`}
+                  >
+                    &rarr;
+                  </button>
+                </div>
+              )}
             </div>
 
-            <div
-              className="product-slider"
-              ref={(el) => (sliderRefs.current[category] = el)}
-            >
-              {items.map(product => {
-                const isInCart = cartItems.some(item => item.productId._id === product._id);
-                const rating = generateRating();
-                const discountPercent = product.oldPrice
-                  ? Math.round((1 - product.price / product.oldPrice) * 100)
-                  : 0;
+            <div className="slider-container">
+              <div
+                className="product-slider"
+                ref={(el) => (sliderRefs.current[category] = el)}
+              >
+                {items.map(product => {
+                  const isInCart = cartItems.some(item => item.productId._id === product._id);
+                  const rating = generateRating();
+                  const discountPercent = product.oldPrice
+                    ? Math.round((1 - product.price / product.oldPrice) * 100)
+                    : 0;
 
-                return (
-                  <div key={product._id} className="product-card">
-                    <div 
-                      className="product-image-container"
-                      onClick={() => handleProductDetails(product._id)}
-                    >
-                      <img
-                        src={`${API_URL.replace('/api/', '')}${product.imageUrl}`}
-                        alt={product.name}
-                        onError={(e) => {
-                          e.target.src = '/placeholder-product.png';
-                          e.target.style.objectFit = 'contain';
-                        }}
-                      />
-                      
-                      {product.oldPrice && (
-                        <div className="discount-badge">
-                          {discountPercent}% OFF
-                        </div>
-                      )}
-                      <div className="quick-view">Quick View</div>
-                    </div>
-
-                    <div className="product-info">
-                      <h3 className="product-title" title={product.name}>
-                        {product.name}
-                      </h3>
-                      
-                      <div className="product-rating">
-                        <div className="stars">
-                          {rating.stars}
-                        </div>
-                        <span>({rating.value})</span>
-                        <span className="reviews">· 42 reviews</span>
-                      </div>
-                      
-                      <div className="product-pricing">
-                        <span className="current-price">₹{product.price}</span>
-                        {product.oldPrice && (
-                          <span className="original-price">₹{product.oldPrice}</span>
-                        )}
-                      </div>
-                      
-                      <button
-                        className={`add-to-cart-btn ${isInCart ? 'in-cart' : ''}`}
-                        onClick={() => handleAddToCart(product._id)}
-                        disabled={isInCart}
+                  return (
+                    <div key={product._id} className="product-card">
+                      <div 
+                        className="product-image-container"
+                        onClick={() => handleProductDetails(product._id)}
                       >
-                        {isInCart ? (
-                          <>
-                            <CartCheck size={16} /> Added to Cart
-                          </>
-                        ) : (
-                          <>
-                            <CartPlus size={16} /> Add to Cart
-                          </>
+                        <div className="image-wrapper">
+                          <img
+                            src={`${API_URL.replace('/api/', '')}${product.imageUrl}`}
+                            alt={product.name}
+                            loading="lazy"
+                            onError={(e) => {
+                              e.target.src = '/placeholder-product.png';
+                              e.target.style.objectFit = 'contain';
+                            }}
+                          />
+                        </div>
+                        
+                        {product.oldPrice && (
+                          <div className="discount-badge">
+                            {discountPercent}% OFF
+                          </div>
                         )}
-                      </button>
+                        <div className="quick-view">Quick View</div>
+                      </div>
+
+                      <div className="product-info">
+                        <h3 className="product-title" title={product.name}>
+                          {product.name}
+                        </h3>
+                        
+                        <div className="product-rating">
+                          <div className="stars">
+                            {rating.stars}
+                          </div>
+                          <span>({rating.value})</span>
+                        </div>
+                        
+                        <div className="product-pricing">
+                          <span className="current-price">₹{product.price}</span>
+                          {product.oldPrice && (
+                            <span className="original-price">₹{product.oldPrice}</span>
+                          )}
+                        </div>
+                        
+                        <button
+                          className={`add-to-cart-btn ${isInCart ? 'in-cart' : ''}`}
+                          onClick={() => handleAddToCart(product._id)}
+                          disabled={isInCart}
+                          aria-label={isInCart ? 'Added to cart' : 'Add to cart'}
+                        >
+                          {isInCart ? (
+                            <>
+                              <CartCheck size={16} /> Added
+                            </>
+                          ) : (
+                            <>
+                              <CartPlus size={16} /> Add to Cart
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         ))}

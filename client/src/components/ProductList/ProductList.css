@@ -95,66 +95,74 @@
   margin: 0;
 }
 
-.slider-controls button {
-  background: #f5f5f5;
-  border: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-left: 0.5rem;
-  cursor: pointer;
-  font-size: 1.2rem;
-  transition: all 0.3s;
-}
-
-.slider-controls button:hover {
-  background: #e0e0e0;
+/* Slider Container */
+.slider-container {
+  position: relative;
+  width: 100%;
+  padding: 0 10px;
 }
 
 /* Product Slider */
 .product-slider {
-  display: flex;
-  overflow-x: auto;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(calc(50% - 15px), 1fr);
   gap: 1.5rem;
-  padding-bottom: 1rem;
-  scrollbar-width: none; /* Firefox */
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  padding: 1rem 0;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .product-slider::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
+  display: none;
 }
 
 /* Product Card */
 .product-card {
-  min-width: 240px;
+  scroll-snap-align: start;
   background: white;
-  border-radius: 10px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
 .product-image-container {
   position: relative;
-  height: 180px;
+  aspect-ratio: 1/1;
   overflow: hidden;
   cursor: pointer;
 }
 
-.product-image-container img {
+.image-wrapper {
   width: 100%;
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9f9f9;
+}
+
+.product-image-container img {
+  width: 80%;
+  height: 80%;
   object-fit: contain;
-  transition: transform 0.5s;
+  transition: transform 0.5s ease;
 }
 
 .product-card:hover .product-image-container img {
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 
 .discount-badge {
@@ -165,8 +173,9 @@
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 600;
+  z-index: 2;
 }
 
 .quick-view {
@@ -174,11 +183,14 @@
   bottom: -40px;
   left: 0;
   right: 0;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
   text-align: center;
-  padding: 0.5rem;
+  padding: 0.75rem;
   font-weight: 500;
-  transition: bottom 0.3s;
+  font-size: 0.9rem;
+  transition: bottom 0.3s ease;
+  z-index: 2;
 }
 
 .product-card:hover .quick-view {
@@ -187,22 +199,30 @@
 
 .product-info {
   padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .product-title {
   font-size: 1rem;
   font-weight: 600;
   margin: 0 0 0.5rem;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-height: 2.8em;
+  line-height: 1.4;
 }
 
 .product-rating {
   display: flex;
   align-items: center;
   margin-bottom: 0.5rem;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+  color: #555;
 }
 
 .stars {
@@ -210,13 +230,12 @@
   margin-right: 0.5rem;
 }
 
-.reviews {
-  color: #666;
-  margin-left: 0.5rem;
-}
-
 .product-pricing {
-  margin: 0.5rem 0;
+  margin: 0.5rem 0 1rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .current-price {
@@ -229,36 +248,63 @@
   font-size: 0.9rem;
   color: #999;
   text-decoration: line-through;
-  margin-left: 0.5rem;
 }
 
 .add-to-cart-btn {
+  margin-top: auto;
   width: 100%;
   padding: 0.7rem;
-  background: #6e8efb;
+  background: linear-gradient(135deg, #6e8efb, #4a6cf7);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  transition: background 0.3s;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
 }
 
 .add-to-cart-btn:hover {
-  background: #5a7df4;
+  background: linear-gradient(135deg, #5a7df4, #3a5af5);
+  transform: translateY(-2px);
 }
 
 .add-to-cart-btn.in-cart {
-  background: #4CAF50;
+  background: linear-gradient(135deg, #4CAF50, #3a9a3f);
   cursor: default;
 }
 
 .add-to-cart-btn.in-cart:hover {
-  background: #4CAF50;
+  transform: none;
+}
+
+/* Slider Controls */
+.slider-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.slider-arrow {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: white;
+  border: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.slider-arrow:hover {
+  background: #f5f5f5;
+  transform: scale(1.05);
 }
 
 /* Loading State */
@@ -320,7 +366,17 @@
 }
 
 /* Responsive Adjustments */
-@media (max-width: 768px) {
+@media (min-width: 480px) {
+  .product-slider {
+    grid-auto-columns: minmax(calc(33.333% - 15px), 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .product-slider {
+    grid-auto-columns: minmax(calc(25% - 15px), 1fr);
+  }
+  
   .hero-content h1 {
     font-size: 2rem;
   }
@@ -330,7 +386,6 @@
   }
   
   .search-input-group {
-    flex-direction: column;
     border-radius: 8px;
   }
   
@@ -340,19 +395,30 @@
   
   .search-input-group button {
     padding: 0.8rem;
-    border-radius: 0 0 8px 8px;
   }
-  
-  .product-card {
-    min-width: 200px;
-  }
-  
-  .product-image-container {
-    height: 150px;
+}
+
+@media (min-width: 1024px) {
+  .product-slider {
+    grid-auto-columns: minmax(calc(20% - 15px), 1fr);
   }
 }
 
 @media (max-width: 480px) {
+  .product-title {
+    font-size: 0.9rem;
+    min-height: 2.6em;
+  }
+  
+  .product-info {
+    padding: 1rem;
+  }
+  
+  .add-to-cart-btn {
+    padding: 0.6rem;
+    font-size: 0.8rem;
+  }
+  
   .hero-search-section {
     padding: 2rem 1rem;
   }
@@ -364,9 +430,5 @@
   
   .slider-controls {
     margin-top: 0.5rem;
-  }
-  
-  .product-card {
-    min-width: 160px;
   }
 }
