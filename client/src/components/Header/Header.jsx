@@ -938,7 +938,7 @@ const TextArea = styled.textarea`
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 12px;
   font-size: 1rem;
-  min-height: 160px;
+  min-height: 130px;
   resize: vertical;
   transition: all 0.3s ease;
   background: #f9f9f9;

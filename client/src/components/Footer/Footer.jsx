@@ -24,7 +24,7 @@ const Footer = () => {
                 style={{ width: '40px', height: '40px' }}
               >
                 <div className="d-flex align-items-center">
-                  <Link className="navbar-brand mt-2 mt-lg-0 d-flex justify-content-center" to={'/'}>
+                  <Link style={{marginLeft:'50px'}} className="navbar-brand mt-2 mt-lg-0 d-flex justify-content-center" to={'/'}>
                     <img
                       className="logo-img img-fluid"
                       style={{ maxWidth: "150px", height: "auto", objectFit: "cover" }}
@@ -35,7 +35,7 @@ const Footer = () => {
                 </div>
                 {/* <i className="bi bi-gem text-white fs-5"></i> */}
               </span>
-              <span>FarmDry Premium Dry Food </span>
+              {/* <span>FarmDry Premium Dry Food </span> */}
             </h5>
             <p className="text-muted mb-4">
               Innovative solutions for your digital needs. We create experiences that matter and deliver value to our customers.
