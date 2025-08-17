@@ -222,7 +222,7 @@ const Header = () => {
             </MobileContactButton>
           </MobileNavItem>
           
-          {user ? (
+          {/* {user ? (
             <MobileUserSection>
               <MobileUserProfile>
                 <MobileUserImage
@@ -253,7 +253,7 @@ const Header = () => {
                 Sign Up
               </MobileSignupLink>
             </MobileAuthButtons>
-          )}
+          )} */}
         </MobileNavList>
       </MobileNav>
 
