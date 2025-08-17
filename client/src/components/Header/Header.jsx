@@ -166,7 +166,7 @@ const Header = () => {
                 <FontAwesomeIcon icon={faSignInAlt} />
                 Login
               </LoginLink>
-              <SignupLink to="/register">
+              <SignupLink to="/SignUp">
                 <FontAwesomeIcon icon={faUserPlus} />
                 Sign Up
               </SignupLink>
