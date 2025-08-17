@@ -135,7 +135,7 @@ const FrontPage = () => {
       </div>
 
       {/* Bottom Bar */}
-      <div className="bottom-bar">
+      {/* <div className="bottom-bar">
         <div className="bottom-bar-content  ">
           <div className="bar-item">
             <img src="https://cdn-icons-png.flaticon.com/512/3144/3144456.png" alt="Free Shipping" />
@@ -154,7 +154,7 @@ const FrontPage = () => {
             <span>24/7 Support</span>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

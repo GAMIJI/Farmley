@@ -29,6 +29,7 @@ const Header = () => {
   const token = localStorage.getItem("token");
   const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef(null);
+  const mobileMenuRef = useRef(null);
 
   const handleLogout = () => {
     if (window.confirm("Are you sure you want to logout?")) {
@@ -77,6 +78,10 @@ const Header = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setIsDropdownOpen(false);
       }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target) && 
+          !e.target.closest('[aria-label="Menu"]')) {
+        setIsOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -90,10 +95,19 @@ const Header = () => {
     setShowContactModal(false);
   };
 
+  const toggleMobileMenu = () => {
+    setIsOpen(!isOpen);
+    if (!isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  };
+
   return (
     <HeaderContainer scrolled={scrolled}>
       <NavContainer>
-        <MobileMenuButton onClick={() => setIsOpen(!isOpen)} aria-label="Menu">
+        <MobileMenuButton onClick={toggleMobileMenu} aria-label="Menu">
           <HamburgerIcon icon={isOpen ? faXmark : faBars} isOpen={isOpen} />
         </MobileMenuButton>
 
@@ -175,25 +189,25 @@ const Header = () => {
         </IconsContainer>
       </NavContainer>
 
-      <MobileNav isOpen={isOpen}>
+      <MobileNav isOpen={isOpen} ref={mobileMenuRef}>
         <MobileNavList>
           <MobileNavItem>
-            <MobileNavLink to="/" onClick={() => setIsOpen(false)}>
+            <MobileNavLink to="/" onClick={toggleMobileMenu}>
               Home
             </MobileNavLink>
           </MobileNavItem>
           <MobileNavItem>
-            <MobileNavLink to="/ProductsPage" onClick={() => setIsOpen(false)}>
+            <MobileNavLink to="/ProductsPage" onClick={toggleMobileMenu}>
               Products
             </MobileNavLink>
           </MobileNavItem>
           <MobileNavItem>
-            <MobileNavLink to="/OfferPage" onClick={() => setIsOpen(false)}>
+            <MobileNavLink to="/OfferPage" onClick={toggleMobileMenu}>
               Discount
             </MobileNavLink>
           </MobileNavItem>
           <MobileNavItem>
-            <MobileNavLink to="/Ingredients" onClick={() => setIsOpen(false)}>
+            <MobileNavLink to="/Ingredients" onClick={toggleMobileMenu}>
               Ingredients
             </MobileNavLink>
           </MobileNavItem>
@@ -201,19 +215,40 @@ const Header = () => {
             <MobileContactButton
               onClick={() => {
                 setShowContactModal(true);
-                setIsOpen(false);
+                toggleMobileMenu();
               }}
             >
               Contact Us
             </MobileContactButton>
           </MobileNavItem>
-          {!user && (
+          
+          {user ? (
+            <MobileUserSection>
+              <MobileUserProfile>
+                <MobileUserImage
+                  src={user?.profileImage ? `${API_URL.replace('/api/', '')}${user.profileImage}` : fallbackImage}
+                  alt={user?.name || "User"}
+                />
+                <MobileUserName>{user?.name || "User"}</MobileUserName>
+              </MobileUserProfile>
+              <MobileUserActions>
+                <MobileUserLink to="/profile" onClick={toggleMobileMenu}>
+                  <FontAwesomeIcon icon={faUser} />
+                  My Profile
+                </MobileUserLink>
+                <MobileUserButton onClick={handleLogout}>
+                  <FontAwesomeIcon icon={faXmark} />
+                  Logout
+                </MobileUserButton>
+              </MobileUserActions>
+            </MobileUserSection>
+          ) : (
             <MobileAuthButtons>
-              <MobileLoginLink to="/login" onClick={() => setIsOpen(false)}>
+              <MobileLoginLink to="/login" onClick={toggleMobileMenu}>
                 <FontAwesomeIcon icon={faSignInAlt} />
                 Login
               </MobileLoginLink>
-              <MobileSignupLink to="/register" onClick={() => setIsOpen(false)}>
+              <MobileSignupLink to="/register" onClick={toggleMobileMenu}>
                 <FontAwesomeIcon icon={faUserPlus} />
                 Sign Up
               </MobileSignupLink>
@@ -641,6 +676,10 @@ const AuthButtons = styled.div`
   display: flex;
   gap: 12px;
   align-items: center;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const LoginLink = styled(Link)`
@@ -682,20 +721,20 @@ const SignupLink = styled(Link)`
 
 const MobileNav = styled.div`
   position: fixed;
-  top: 0;
+
   left: 0;
   right: 0;
-  bottom: 0;
+
   background-color: white;
-  z-index: 1000;
+  z-index: 999;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   transform: ${({ isOpen }) => isOpen ? 'translateX(0)' : 'translateX(-100%)'};
   transition: transform 0.3s ease;
-  padding: 80px 20px 40px;
-  animation: ${({ isOpen }) => isOpen ? css`${slideIn} 0.3s ease` : 'none'};
+  padding: 50px 20px 40px;
+  overflow-y: auto;
 `;
 
 const MobileNavList = styled.ul`
@@ -706,7 +745,7 @@ const MobileNavList = styled.ul`
   max-width: 300px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 `;
 
 const MobileNavItem = styled.li`
@@ -753,13 +792,14 @@ const MobileContactButton = styled.button`
 
 const MobileAuthButtons = styled.div`
   display: flex;
+  flex-direction: column;
   gap: 12px;
   margin-top: 20px;
   width: 100%;
 `;
 
 const MobileLoginLink = styled(Link)`
-  padding: 12px 20px;
+  padding: 14px 20px;
   color: #4CAF50;
   border-radius: 8px;
   text-decoration: none;
@@ -767,7 +807,6 @@ const MobileLoginLink = styled(Link)`
   transition: all 0.3s ease;
   font-size: 1rem;
   text-align: center;
-  flex: 1;
   border: 1px solid #4CAF50;
   display: flex;
   align-items: center;
@@ -780,7 +819,7 @@ const MobileLoginLink = styled(Link)`
 `;
 
 const MobileSignupLink = styled(Link)`
-  padding: 12px 20px;
+  padding: 14px 20px;
   background: #4CAF50;
   color: white;
   border-radius: 8px;
@@ -789,7 +828,6 @@ const MobileSignupLink = styled(Link)`
   transition: all 0.3s ease;
   font-size: 1rem;
   text-align: center;
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -800,10 +838,86 @@ const MobileSignupLink = styled(Link)`
   }
 `;
 
+const MobileUserSection = styled.div`
+  margin-top: 30px;
+  width: 100%;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: 20px;
+`;
+
+const MobileUserProfile = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+`;
+
+const MobileUserImage = styled.img`
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #f5f5f5;
+`;
+
+const MobileUserName = styled.span`
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #333;
+`;
+
+const MobileUserActions = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const MobileUserLink = styled(Link)`
+  text-decoration: none;
+  color: #555;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.03);
+
+  &:hover {
+    color: #4CAF50;
+    background: rgba(76, 175, 80, 0.08);
+  }
+`;
+
+const MobileUserButton = styled.button`
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: #555;
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  font-size: 1rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.03);
+
+  &:hover {
+    color: #ff4757;
+    background: rgba(255, 71, 87, 0.08);
+  }
+`;
+
 const ModalOverlay = styled.div`
   position: fixed;
+ 
   left: 0;
   right: 0;
+
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(8px);
   display: flex;
@@ -823,19 +937,14 @@ const ModalContainer = styled.div`
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   animation: ${slideDown} 0.3s ease forwards;
   max-height: 90vh;
-  overflow-y: auto; /* still scrollable */
+  overflow-y: auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
 
-  /* hide scrollbar - Chrome, Safari, Edge */
   &::-webkit-scrollbar {
     display: none;
   }
-
-  /* hide scrollbar - Firefox */
   scrollbar-width: none;
-
-  /* hide scrollbar - IE/Edge (legacy) */
   -ms-overflow-style: none;
 
   &::before {

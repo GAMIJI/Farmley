@@ -2,7 +2,101 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { StarFill, StarHalf, Search, CartPlus, CartCheck } from "react-bootstrap-icons";
+import styled, { keyframes } from "styled-components";
 import "./ProductList.css";
+
+// Styled Components for Auth Modal
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const AuthPrompt = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+
+  .auth-modal {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    animation: ${fadeIn} 0.3s ease;
+  }
+
+  h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+  }
+
+  p {
+    color: #666;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1rem;
+    min-width: 120px;
+  }
+
+  .login-btn {
+    background: #6e8efb;
+    color: white;
+    border: none;
+
+    &:hover {
+      background: #5a7df4;
+      transform: translateY(-2px);
+    }
+  }
+
+  .cancel-btn {
+    background: transparent;
+    border: 1px solid #ddd;
+    color: #666;
+
+    &:hover {
+      background: #f5f5f5;
+      transform: translateY(-2px);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .auth-modal {
+      padding: 1.5rem;
+    }
+    
+    button {
+      padding: 0.6rem 1.2rem;
+      font-size: 0.9rem;
+    }
+  }
+`;
 
 const ProductList = () => {
   const API_URL = process.env.REACT_APP_API_BASE_URL;
@@ -11,6 +105,9 @@ const ProductList = () => {
   const [loading, setLoading] = useState(true);
   const [cartItems, setCartItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [pendingProductId, setPendingProductId] = useState(null);
+  const [addingToCart, setAddingToCart] = useState(false);
   const sliderRefs = useRef({});
 
   useEffect(() => {
@@ -40,10 +137,11 @@ const ProductList = () => {
 
   const fetchCartItems = async () => {
     const token = localStorage.getItem("token");
-    if (!token) return [];
+    const userId = localStorage.getItem("userData");
+    if (!token || !userId) return [];
 
     try {
-      const res = await axios.get(`${API_URL}cart/addToCart`, {
+      const res = await axios.get(`${API_URL}cart/addToCart?userId=${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCartItems(res.data.data || []);
@@ -59,23 +157,43 @@ const ProductList = () => {
     const token = localStorage.getItem("token");
 
     if (!userId || !token) {
-      alert("Please login to add items to cart");
-      return navigate("/login");
+      setPendingProductId(productId);
+      setShowAuthModal(true);
+      return;
     }
 
-    if (cartItems.some(item => item.productId._id === productId)) return;
+    if (cartItems.some(item => item.productId?._id === productId)) return;
 
+    setAddingToCart(true);
     try {
       await axios.post(
         `${API_URL}cart/add`,
-        { userId, productId, quantity: 1 },
+        { productId, quantity: 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       await fetchCartItems();
     } catch (error) {
       console.error("Error adding to cart:", error);
       alert("Failed to add item to cart");
+    } finally {
+      setAddingToCart(false);
     }
+  };
+
+  const handleAuthConfirm = () => {
+    navigate("/login", { 
+      state: { 
+        from: "product-list",
+        message: "Please login to add items to your cart",
+        returnUrl: window.location.pathname
+      } 
+    });
+    setShowAuthModal(false);
+  };
+
+  const handleAuthCancel = () => {
+    setShowAuthModal(false);
+    setPendingProductId(null);
   };
 
   const handleProductDetails = (id) => {
@@ -182,7 +300,7 @@ const ProductList = () => {
                 ref={(el) => (sliderRefs.current[category] = el)}
               >
                 {items.map(product => {
-                  const isInCart = cartItems.some(item => item.productId._id === product._id);
+                  const isInCart = cartItems.some(item => item.productId?._id === product._id);
                   const rating = generateRating();
                   const discountPercent = product.oldPrice
                     ? Math.round((1 - product.price / product.oldPrice) * 100)
@@ -234,12 +352,14 @@ const ProductList = () => {
                         </div>
                         
                         <button
-                          className={`add-to-cart-btn ${isInCart ? 'in-cart' : ''}`}
+                          className={`add-to-cart-btn ${isInCart ? 'in-cart' : ''} ${addingToCart && pendingProductId === product._id ? 'adding' : ''}`}
                           onClick={() => handleAddToCart(product._id)}
-                          disabled={isInCart}
+                          disabled={isInCart || (addingToCart && pendingProductId === product._id)}
                           aria-label={isInCart ? 'Added to cart' : 'Add to cart'}
                         >
-                          {isInCart ? (
+                          {addingToCart && pendingProductId === product._id ? (
+                            <span className="adding-text">Adding...</span>
+                          ) : isInCart ? (
                             <>
                               <CartCheck size={16} /> Added
                             </>
@@ -269,6 +389,24 @@ const ProductList = () => {
             Clear Search
           </button>
         </div>
+      )}
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthPrompt>
+          <div className="auth-modal">
+            <h3>Login Required</h3>
+            <p>You need to login to add items to your cart. Would you like to login now?</p>
+            <div className="button-group">
+              <button className="login-btn" onClick={handleAuthConfirm}>
+                Login
+              </button>
+              <button className="cancel-btn" onClick={handleAuthCancel}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </AuthPrompt>
       )}
     </div>
   );

@@ -13,10 +13,20 @@ const Cart = () => {
   const [couponCode, setCouponCode] = useState("");
   const [couponApplied, setCouponApplied] = useState(false);
   const [discount, setDiscount] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
   const userId = localStorage.getItem("userData");
   const API_URL = process.env.REACT_APP_API_BASE_URL;
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const fetchCart = async () => {
     setIsLoading(true);
@@ -86,7 +96,6 @@ const Cart = () => {
   };
 
   const applyCoupon = () => {
-    // In a real app, you would validate the coupon with your backend
     if (couponCode === "SAVE10") {
       setDiscount(0.1); // 10% discount
       setCouponApplied(true);
@@ -129,12 +138,12 @@ const Cart = () => {
       <Header>
         <div className="header-content">
           <h1>
-            <FiShoppingBag /> Your Shopping Cart
+            <FiShoppingBag /> {isMobile ? 'Cart' : 'Your Shopping Cart'}
           </h1>
-          <p className="item-count">{cart.length} {cart.length === 1 ? 'item' : 'items'}</p>
+          {!isMobile && <p className="item-count">{cart.length} {cart.length === 1 ? 'item' : 'items'}</p>}
         </div>
         <Link to="/ProductsPage" className="continue-shopping">
-          <FiArrowLeft /> Continue Shopping
+          <FiArrowLeft /> {isMobile ? 'Shop' : 'Continue Shopping'}
         </Link>
       </Header>
 
@@ -143,7 +152,7 @@ const Cart = () => {
           {cart.length === 0 ? (
             <EmptyCart>
               <div className="empty-cart-icon">
-                <FiShoppingBag size={48} />
+                <FiShoppingBag size={isMobile ? 36 : 48} />
               </div>
               <h3>Your cart is empty</h3>
               <p>Looks like you haven't added anything to your cart yet</p>
@@ -162,20 +171,22 @@ const Cart = () => {
                     exit={{ opacity: 0, x: -100 }}
                     transition={{ duration: 0.3 }}
                     disabled={updatingItems[item.productId._id]}
+                    $isMobile={isMobile}
                   >
                     <ProductImage
                       src={`${API_URL.replace('/api/', '')}${item.productId.imageUrl}`}
                       alt={item.productId.name}
                       onClick={() => navigate(`/product/${item.productId._id}`)}
+                      $isMobile={isMobile}
                     />
-                    <ProductDetails>
+                    <ProductDetails $isMobile={isMobile}>
                       <h4 onClick={() => navigate(`/product/${item.productId._id}`)}>
                         {item.productId.name}
                       </h4>
                       <p className="category">{item.productId.category}</p>
                       <p className="price">₹{item.productId.price.toFixed(2)} each</p>
                     </ProductDetails>
-                    <QuantityWrapper>
+                    <QuantityWrapper $isMobile={isMobile}>
                       <QuantityControls>
                         <button
                           onClick={() => updateQuantity(item.productId._id, item.quantity - 1)}
@@ -193,10 +204,17 @@ const Cart = () => {
                           <FiPlus />
                         </button>
                       </QuantityControls>
+                      {isMobile && (
+                        <Subtotal $isMobile>
+                          ₹{(item.productId.price * item.quantity).toFixed(2)}
+                        </Subtotal>
+                      )}
                     </QuantityWrapper>
-                    <Subtotal>
-                      ₹{(item.productId.price * item.quantity).toFixed(2)}
-                    </Subtotal>
+                    {!isMobile && (
+                      <Subtotal>
+                        ₹{(item.productId.price * item.quantity).toFixed(2)}
+                      </Subtotal>
+                    )}
                     <RemoveButton 
                       onClick={() => removeItem(item.productId._id)} 
                       aria-label="Remove item"
@@ -212,11 +230,11 @@ const Cart = () => {
         </CartItems>
         
         {cart.length > 0 && (
-          <OrderSummary>
+          <OrderSummary $isMobile={isMobile}>
             <SummaryCard>
               <h3>Order Summary</h3>
               
-              <CouponSection>
+              <CouponSection $isMobile={isMobile}>
                 {couponApplied ? (
                   <div className="coupon-applied">
                     <span>Coupon: {couponCode} (10% off)</span>
@@ -230,7 +248,7 @@ const Cart = () => {
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value)}
                     />
-                    <button onClick={applyCoupon}>Apply</button>
+                    <button onClick={applyCoupon}>{isMobile ? 'Apply' : 'Apply Coupon'}</button>
                   </div>
                 )}
               </CouponSection>
@@ -282,30 +300,17 @@ const Cart = () => {
                 <span>Secure Checkout</span>
               </SecureCheckout>
               
-              <PaymentMethods>
+              <PaymentMethods $isMobile={isMobile}>
                 <img src="https://e7.pngegg.com/pngimages/242/982/png-clipart-visa-logo-credit-card-e-commerce-visa-payment-mastercard-visa-company-text.png" alt="Visa" />
                 <img src="https://www.logo.wine/a/logo/PhonePe/PhonePe-Logo.wine.svg" alt="Phone pe" />
-                <img src="https://www.logo.wine/a/logo/PayPal/PayPal-Logo.wine.svg" alt="PayPal" />
-                <img src="https://www.logo.wine/a/logo/Apple_Pay/Apple_Pay-Logo.wine.svg" alt="Apple Pay" />
+                {!isMobile && (
+                  <>
+                    <img src="https://www.logo.wine/a/logo/PayPal/PayPal-Logo.wine.svg" alt="PayPal" />
+                    <img src="https://www.logo.wine/a/logo/Apple_Pay/Apple_Pay-Logo.wine.svg" alt="Apple Pay" />
+                  </>
+                )}
               </PaymentMethods>
             </SummaryCard>
-            
-            {/* <Recommendations>
-              <h4>Frequently Bought Together</h4>
-              <div className="products">
-                
-                <div className="product">
-                  <img src="/product1.jpg" alt="Product" />
-                  <p>Wireless Earbuds</p>
-                  <button>Add to Cart</button>
-                </div>
-                <div className="product">
-                  <img src="/product2.jpg" alt="Product" />
-                  <p>Phone Case</p>
-                  <button>Add to Cart</button>
-                </div>
-              </div>
-            </Recommendations> */}
           </OrderSummary>
         )}
       </ContentLayout>
@@ -339,10 +344,11 @@ const Header = styled.div`
     display: flex;
     align-items: center;
     gap: 1rem;
+    flex-wrap: wrap;
   }
 
   h1 {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: #2d3748;
     display: flex;
@@ -352,6 +358,10 @@ const Header = styled.div`
 
     svg {
       color: #4f46e5;
+    }
+
+    @media (min-width: 768px) {
+      font-size: 1.8rem;
     }
   }
 
@@ -371,12 +381,16 @@ const Header = styled.div`
     text-decoration: none;
     font-weight: 500;
     transition: all 0.2s;
-    font-size: 1rem;
+    font-size: 0.9rem;
     width: fit-content;
 
     &:hover {
       color: #4338ca;
       text-decoration: underline;
+    }
+
+    @media (min-width: 768px) {
+      font-size: 1rem;
     }
   }
 
@@ -404,7 +418,7 @@ const CartItems = styled.div`
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  padding: 1.5rem;
+  padding: 1rem;
   transition: all 0.3s;
 
   &:hover {
@@ -421,45 +435,62 @@ const EmptyCart = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 0;
+  padding: 2rem 0;
   text-align: center;
 
   .empty-cart-icon {
     background: #f0f9ff;
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     color: #3b82f6;
+
+    @media (min-width: 768px) {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 1.5rem;
+    }
   }
 
   h3 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     color: #1f2937;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
     font-weight: 600;
+
+    @media (min-width: 768px) {
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
   }
 
   p {
     color: #6b7280;
-    margin-bottom: 2rem;
-    font-size: 1rem;
-    max-width: 350px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    max-width: 300px;
     line-height: 1.5;
+
+    @media (min-width: 768px) {
+      font-size: 1rem;
+      max-width: 350px;
+      margin-bottom: 2rem;
+    }
   }
 
   .cta-button {
     background: #4f46e5;
     color: white;
-    padding: 0.75rem 1.5rem;
+    padding: 0.75rem 1.25rem;
     border-radius: 8px;
     text-decoration: none;
     font-weight: 500;
     transition: all 0.3s;
-    font-size: 1rem;
+    font-size: 0.9rem;
     box-shadow: 0 2px 5px rgba(79, 70, 229, 0.2);
 
     &:hover {
@@ -467,15 +498,20 @@ const EmptyCart = styled.div`
       transform: translateY(-2px);
       box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
     }
+
+    @media (min-width: 768px) {
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+    }
   }
 `;
 
 const CartItem = styled(motion.div)`
   display: grid;
-  grid-template-columns: 80px 1fr auto auto;
-  gap: 1.5rem;
+  grid-template-columns: ${props => props.$isMobile ? '70px 1fr auto' : '100px 2fr 1fr 1fr auto'};
+  gap: ${props => props.$isMobile ? '0.75rem' : '1.5rem'};
   align-items: center;
-  padding: 1.5rem 0;
+  padding: ${props => props.$isMobile ? '1rem 0' : '1.5rem 0'};
   border-bottom: 1px solid #f3f4f6;
   position: relative;
   opacity: ${props => props.disabled ? 0.6 : 1};
@@ -487,12 +523,13 @@ const CartItem = styled(motion.div)`
   @media (min-width: 768px) {
     grid-template-columns: 100px 2fr 1fr 1fr auto;
     gap: 2rem;
+    padding: 1.5rem 0;
   }
 `;
 
 const ProductImage = styled.img`
   width: 100%;
-  height: 80px;
+  height: ${props => props.$isMobile ? '70px' : '80px'};
   object-fit: cover;
   border-radius: 8px;
   cursor: pointer;
@@ -510,15 +547,19 @@ const ProductImage = styled.img`
 const ProductDetails = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
 
   h4 {
-    font-size: 1rem;
+    font-size: ${props => props.$isMobile ? '0.9rem' : '1rem'};
     font-weight: 600;
     color: #1f2937;
     margin: 0;
     cursor: pointer;
     transition: color 0.2s;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 
     &:hover {
       color: #4f46e5;
@@ -526,21 +567,27 @@ const ProductDetails = styled.div`
   }
 
   .category {
-    font-size: 0.875rem;
+    font-size: ${props => props.$isMobile ? '0.75rem' : '0.875rem'};
     color: #6b7280;
     margin: 0;
   }
 
   .price {
-    font-size: 0.875rem;
+    font-size: ${props => props.$isMobile ? '0.75rem' : '0.875rem'};
     color: #4f46e5;
     font-weight: 500;
+  }
+
+  @media (min-width: 768px) {
+    gap: 0.5rem;
   }
 `;
 
 const QuantityWrapper = styled.div`
   display: flex;
-  justify-content: center;
+  flex-direction: ${props => props.$isMobile ? 'column' : 'row'};
+  align-items: ${props => props.$isMobile ? 'flex-end' : 'center'};
+  gap: ${props => props.$isMobile ? '0.5rem' : '0'};
 `;
 
 const QuantityControls = styled.div`
@@ -553,8 +600,8 @@ const QuantityControls = styled.div`
   background: #f9fafb;
 
   button {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border: none;
     background: white;
     border-radius: 6px;
@@ -575,21 +622,32 @@ const QuantityControls = styled.div`
       opacity: 0.5;
       cursor: not-allowed;
     }
+
+    @media (min-width: 768px) {
+      width: 32px;
+      height: 32px;
+    }
   }
 
   span {
-    min-width: 30px;
+    min-width: 24px;
     text-align: center;
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+
+    @media (min-width: 768px) {
+      min-width: 30px;
+      font-size: 0.95rem;
+    }
   }
 `;
 
 const Subtotal = styled.div`
   font-weight: 600;
   color: #1f2937;
-  font-size: 1rem;
-  text-align: right;
+  font-size: ${props => props.$isMobile ? '0.9rem' : '1rem'};
+  text-align: ${props => props.$isMobile ? 'left' : 'right'};
+  margin-top: ${props => props.$isMobile ? '0' : '0'};
 `;
 
 const RemoveButton = styled.button`
@@ -615,8 +673,8 @@ const RemoveButton = styled.button`
   }
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: ${props => props.$isMobile ? '16px' : '18px'};
+    height: ${props => props.$isMobile ? '16px' : '18px'};
   }
 `;
 
@@ -625,8 +683,10 @@ const OrderSummary = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  position: ${props => props.$isMobile ? 'static' : 'sticky'};
+  top: ${props => props.$isMobile ? 'auto' : '1rem'};
 
-  @media (min-width: 1024px) {
+  @media (min-width: 768px) {
     position: sticky;
     top: 1rem;
   }
@@ -636,7 +696,7 @@ const SummaryCard = styled.div`
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  padding: 1.5rem;
+  padding: 1.25rem;
   transition: all 0.3s;
 
   &:hover {
@@ -644,17 +704,26 @@ const SummaryCard = styled.div`
   }
 
   h3 {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: #1f2937;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid #f3f4f6;
+
+    @media (min-width: 768px) {
+      font-size: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    padding: 1.5rem;
   }
 `;
 
 const CouponSection = styled.div`
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 
   .coupon-input {
     display: flex;
@@ -680,10 +749,11 @@ const CouponSection = styled.div`
       color: white;
       border: none;
       border-radius: 8px;
-      padding: 0 1rem;
+      padding: 0 ${props => props.$isMobile ? '0.75rem' : '1rem'};
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
+      white-space: nowrap;
 
       &:hover {
         background: #4338ca;
@@ -717,40 +787,58 @@ const CouponSection = styled.div`
       }
     }
   }
+
+  @media (min-width: 768px) {
+    margin-bottom: 1.5rem;
+  }
 `;
 
 const SummaryRow = styled.div`
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.75rem;
-  font-size: 0.9375rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
   color: #4b5563;
 
   &.discount {
     color: #166534;
     font-weight: 500;
   }
+
+  @media (min-width: 768px) {
+    font-size: 0.9375rem;
+    margin-bottom: 0.75rem;
+  }
 `;
 
 const Divider = styled.hr`
   border: none;
   border-top: 1px solid #e5e7eb;
-  margin: 1.25rem 0;
+  margin: 1rem 0;
+
+  @media (min-width: 768px) {
+    margin: 1.25rem 0;
+  }
 `;
 
 const TotalRow = styled.div`
   display: flex;
   justify-content: space-between;
-  margin: 1.5rem 0;
-  font-size: 1.125rem;
+  margin: 1.25rem 0;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #1f2937;
+
+  @media (min-width: 768px) {
+    font-size: 1.125rem;
+    margin: 1.5rem 0;
+  }
 `;
 
 const CheckoutButton = styled(Link)`
   display: block;
   width: 100%;
-  padding: 1rem;
+  padding: 0.9rem;
   background: #4f46e5;
   color: white;
   border: none;
@@ -761,13 +849,18 @@ const CheckoutButton = styled(Link)`
   text-decoration: none;
   cursor: pointer;
   transition: all 0.3s;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   box-shadow: 0 2px 5px rgba(79, 70, 229, 0.2);
 
   &:hover {
     background: #4338ca;
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+  }
+
+  @media (min-width: 768px) {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
   }
 `;
 
@@ -777,22 +870,27 @@ const SecureCheckout = styled.div`
   justify-content: center;
   gap: 0.5rem;
   color: #6b7280;
-  font-size: 0.875rem;
-  margin-bottom: 1.5rem;
+  font-size: 0.8rem;
+  margin-bottom: 1.25rem;
 
   .secure-icon {
-    font-size: 1rem;
+    font-size: 0.9rem;
+  }
+
+  @media (min-width: 768px) {
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
   }
 `;
 
 const PaymentMethods = styled.div`
   display: flex;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1rem 0;
+  justify-content: ${props => props.$isMobile ? 'space-between' : 'center'};
+  gap: ${props => props.$isMobile ? '0.5rem' : '1rem'};
+  padding: 0.5rem 0;
 
   img {
-    height: 24px;
+    height: ${props => props.$isMobile ? '20px' : '24px'};
     filter: grayscale(100%);
     opacity: 0.7;
     transition: all 0.2s;
@@ -802,66 +900,11 @@ const PaymentMethods = styled.div`
       opacity: 1;
     }
   }
-`;
 
-const Recommendations = styled.div`
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  padding: 1.5rem;
-  transition: all 0.3s;
-
-  &:hover {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  }
-
-  h4 {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 1rem;
-  }
-
-  .products {
-    display: flex;
+  @media (min-width: 768px) {
+    padding: 1rem 0;
+    justify-content: center;
     gap: 1rem;
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-  }
-
-  .product {
-    min-width: 150px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-
-    img {
-      width: 100%;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 8px;
-    }
-
-    p {
-      font-size: 0.875rem;
-      color: #1f2937;
-      margin: 0;
-    }
-
-    button {
-      background: #f3f4f6;
-      color: #1f2937;
-      border: none;
-      border-radius: 6px;
-      padding: 0.5rem;
-      font-size: 0.75rem;
-      cursor: pointer;
-      transition: all 0.2s;
-
-      &:hover {
-        background: #e5e7eb;
-      }
-    }
   }
 `;
 
