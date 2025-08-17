@@ -17,7 +17,7 @@ import ProductList from "./components/ProductList/ProductList";
 import ProductDetail from "./components/ProductDetail/ProductDetail";
 import CheckoutPage from "./components/Checkout/CheckoutPage";
 
-
+import 'react-toastify/dist/ReactToastify.css';
 
 
 
@@ -37,6 +37,7 @@ const App = () => {
           
           <Route path="/" element={<Home />} />
           <Route path="/ProductsPage" element={<ProductsPage />} />
+          <Route path="/ProductList" element={<ProductList />} />
           <Route path="/OfferPage" element={<OfferPage />} />
           <Route path="/ingredients" element={<Ingredients />} />
           <Route path="/contactus" element={<ContactUs />} />

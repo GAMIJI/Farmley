@@ -4,6 +4,10 @@ import { faEye, faEyeSlash, faUserCircle } from "@fortawesome/free-solid-svg-ico
 import { useNavigate, Link } from "react-router-dom";
 import API from "../../Axios/axiosInstance";
 import "./SignUp.css";
+import axios from "axios";
+const API_URL = process.env.REACT_APP_API_BASE_URL;
+
+
 
 const SignUp = () => {
   const initialState = {
@@ -60,7 +64,7 @@ const SignUp = () => {
         console.log(pair[0], pair[1]);
       }
 
-      await API.post("/user/signup", {
+      await axios.post(`${API_URL}user/signup`, {
         name: formData.name,
         email: formData.email,
         mobile: formData.mobile,

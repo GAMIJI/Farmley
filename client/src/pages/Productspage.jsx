@@ -6,9 +6,9 @@ import ProductList from '../components/ProductList/ProductList'
 export const ProductsPage = () => {
   return (
     <div className='contnaier'>
-      <div className='purp'>
+      {/* <div className='purp'>
           <h1>Enjoy Our Purposefuel</h1>
-      </div>
+      </div> */}
       <ProductList/>
     </div>
   )

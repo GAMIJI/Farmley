@@ -13,23 +13,25 @@ const dbURL = process.env.MONGODB_URI || "mongodb+srv://Farmley_db:Farmley_9575@
 
 
 
-const allowedOrigins = [
-  "https://localhost:5000",
-  "https://farmley-seven.vercel.app"
-];
+// const allowedOrigins = [
+//   "https://localhost:5002",
+//   "https://farmley-seven.vercel.app"
+// ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     if (!origin || allowedOrigins.includes(origin)) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error("Not allowed by CORS"));
+//     }
+//   },
+//   credentials: true,
+//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization"]
+// }));
+
+app.use(cors());
 
 app.options("*", cors()); // ✅ handles preflight
 

@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { FaCheckCircle, FaCreditCard, FaMoneyBillWave, FaShoppingCart, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { HiOutlineLocationMarker, HiOutlineCreditCard, HiOutlineUser } from 'react-icons/hi';
 import API from '../../Axios/axiosInstance';
+import '../Checkout/CheckoutPage.css';
+
+const API_URL = process.env.REACT_APP_API_BASE_URL;
 
 const CheckoutPage = () => {
-
     const location = useLocation();
-   const rawItems = location.state?.cartItems || []; // [{productId, quantity}]
-console.log("Cart items passed to checkout:", rawItems);
-
-
+    const navigate = useNavigate();
+    const rawItems = location.state?.cartItems || [];
+    
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -24,39 +27,73 @@ console.log("Cart items passed to checkout:", rawItems);
         expiryDate: '',
         cvv: ''
     });
-
-    const [cartItems, setCartItems] = useState([]);
-    // console.log(cartItems);
     
+    const [errors, setErrors] = useState({});
+    const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(false);
+    const [orderDetails, setOrderDetails] = useState(null);
+    const [activeStep, setActiveStep] = useState(1);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
-    // Fetch cart items (mock data)
- useEffect(() => {
-    const fetchProductDetails = async () => {
-      try {
-        const productDetails = await Promise.all(
-          rawItems.map(async (item) => {
-            const res = await API.get(`/products/${item.productId}`);
-            return {
-              ...res.data, // your API should return product { _id, name, price, imageUrl }
-              quantity: item.quantity,
-            };
-          })
-        );
-        console.log("fhgiukjfdngf",productDetails);
+    useEffect(() => {
+        const fetchProductDetails = async () => {
+            try {
+                const productDetails = await Promise.all(
+                    rawItems.map(async (item) => {
+                        const res = await axios.get(`${API_URL}products/${item.productId}`);
+                        return {
+                            ...res.data,
+                            quantity: item.quantity,
+                        };
+                    })
+                );
+                setCartItems(productDetails);
+            } catch (error) {
+                console.error("Error fetching product details:", error);
+            }
+        };
+
+        if (rawItems.length > 0) {
+            fetchProductDetails();
+        } else {
+            navigate('/cart');
+        }
+    }, [rawItems, navigate]);
+
+    const validateForm = () => {
+        const newErrors = {};
         
-        setCartItems(productDetails);
-      } catch (error) {
-        console.error("Error fetching product details:", error);
-      }
+        if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+        if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+        if (!formData.email.trim()) {
+            newErrors.email = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            newErrors.email = 'Email is invalid';
+        }
+        if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
+        if (!formData.address.trim()) newErrors.address = 'Address is required';
+        if (!formData.city.trim()) newErrors.city = 'City is required';
+        if (!formData.state.trim()) newErrors.state = 'State is required';
+        if (!formData.zipCode.trim()) newErrors.zipCode = 'ZIP code is required';
+        
+        if (formData.paymentMethod === 'online') {
+            if (!formData.cardNumber.trim()) newErrors.cardNumber = 'Card number is required';
+            if (!formData.expiryDate.trim()) newErrors.expiryDate = 'Expiry date is required';
+            if (!formData.cvv.trim()) newErrors.cvv = 'CVV is required';
+        }
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
-
-    if (rawItems.length > 0) {
-      fetchProductDetails();
-    }
-  }, [rawItems]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -64,38 +101,50 @@ console.log("Cart items passed to checkout:", rawItems);
             ...prev,
             [name]: value
         }));
+        
+        if (errors[name]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
     };
 
     const calculateTotal = () => {
         const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const shipping = 5.99; // Flat rate shipping
+        const shipping = subtotal > 50 ? 0 : 5.99;
+        const tax = subtotal * 0.08;
         return {
             subtotal: subtotal.toFixed(2),
             shipping: shipping.toFixed(2),
-            total: (subtotal + shipping).toFixed(2)
+            tax: tax.toFixed(2),
+            total: (subtotal + shipping + tax).toFixed(2)
         };
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        if (!validateForm()) return;
+        
         setLoading(true);
 
         try {
             const orderData = {
                 ...formData,
                 items: rawItems,
-                total: calculateTotal().total,
+                totals: calculateTotal(),
                 status: 'pending'
             };
 
-            const response = await axios.post('http://:5001/api/order/checkout', orderData);
+            const response = await axios.post(`${API_URL}order/checkout`, orderData);
 
             if (response.data.success) {
+                setOrderDetails(response.data.order);
                 setOrderSuccess(true);
             } else {
-                alert('Order failed. Try again.');
+                alert('Order failed. Please try again.');
             }
-
         } catch (error) {
             console.error('Error submitting order:', error);
             alert('There was an error processing your order. Please try again.');
@@ -104,505 +153,422 @@ console.log("Cart items passed to checkout:", rawItems);
         }
     };
 
+    const nextStep = () => {
+        if (activeStep === 1 && !validatePersonalInfo()) return;
+        setActiveStep(prev => prev + 1);
+    };
 
-    const { subtotal, shipping, total } = calculateTotal();
+    const prevStep = () => {
+        setActiveStep(prev => prev - 1);
+    };
+
+    const validatePersonalInfo = () => {
+        const newErrors = {};
+        if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+        if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+        if (!formData.email.trim()) newErrors.email = 'Email is required';
+        if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const { subtotal, shipping, tax, total } = calculateTotal();
 
     if (orderSuccess) {
         return (
-            <div style={styles.successContainer}>
-                <div style={styles.successCard}>
-                    <h2 style={styles.successTitle}>Order Placed Successfully!</h2>
-                    <p style={styles.successText}>Thank you for your purchase. Your order has been received.</p>
-                    <p style={styles.successText}>Order ID: #{Math.floor(Math.random() * 1000000)}</p>
-                    <Link
-                        style={styles.continueButton}
-                        to={'/'}
-                    >
-                        Continue Shopping
-                    </Link>
+            <div className="checkout-success">
+                <div className="success-card">
+                    <div className="success-icon-container">
+                        <FaCheckCircle className="success-icon" />
+                    </div>
+                    <h2>Order Confirmed!</h2>
+                    <p className="success-message">Thank you for your purchase. A confirmation has been sent to {formData.email}.</p>
+                    
+                    <div className="order-details-card">
+                        <div className="order-detail">
+                            <span className="detail-label">Order Number</span>
+                            <span className="detail-value">#{orderDetails?.orderId || Math.floor(Math.random() * 1000000)}</span>
+                        </div>
+                        <div className="order-detail">
+                            <span className="detail-label">Total Amount</span>
+                            <span className="detail-value">${total}</span>
+                        </div>
+                        <div className="order-detail">
+                            <span className="detail-label">Estimated Delivery</span>
+                            <span className="detail-value">{new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    
+                    <div className="success-actions">
+                        <Link to="/orders" className="btn btn-outline">
+                            View Order
+                        </Link>
+                        <Link to="/" className="btn btn-primary">
+                            Continue Shopping
+                        </Link>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div style={styles.container}>
-            <div style={styles.checkoutContainer}>
-                <h1 style={styles.title}>Checkout</h1>
+        <div className={`checkout-container ${isMobile ? 'mobile' : 'desktop'}`}>
+            {isMobile && (
+                <div className="mobile-header">
+                    <button onClick={activeStep > 1 ? prevStep : () => navigate(-1)} className="back-button">
+                        <FaArrowLeft />
+                    </button>
+                    <h1>Checkout</h1>
+                </div>
+            )}
+            
+            {!isMobile && (
+                <div className="checkout-header">
+                    <h1>Complete Your Purchase</h1>
+                    <div className="checkout-progress">
+                        <div className={`progress-step ${activeStep === 1 ? 'active' : ''} ${activeStep > 1 ? 'completed' : ''}`}>
+                            <div className="step-number">1</div>
+                            <div className="step-title">Information</div>
+                        </div>
+                        <div className={`progress-step ${activeStep === 2 ? 'active' : ''} ${activeStep > 2 ? 'completed' : ''}`}>
+                            <div className="step-number">2</div>
+                            <div className="step-title">Shipping</div>
+                        </div>
+                        <div className={`progress-step ${activeStep === 3 ? 'active' : ''}`}>
+                            <div className="step-number">3</div>
+                            <div className="step-title">Payment</div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-                <form onSubmit={handleSubmit} style={styles.form}>
-                    <div style={styles.formGrid}>
-                        {/* Billing Information */}
-                        <div style={styles.section}>
-                            <h2 style={styles.sectionTitle}>Billing Information</h2>
-
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>First Name*</label>
-                                <input
-                                    type="text"
-                                    name="firstName"
-                                    value={formData.firstName}
-                                    onChange={handleChange}
-                                    required
-                                    style={styles.input}
-                                />
+            <div className="checkout-content">
+                {!isMobile && (
+                    <div className="order-summary-panel">
+                        <h3><FaShoppingCart /> Order Summary</h3>
+                        
+                        <div className="cart-items-container">
+                            {cartItems.map(item => (
+                                <div key={item._id} className="cart-item">
+                                    <div className="item-image-container">
+                                        <img 
+                                            src={`${API_URL.replace('/api/', '')}${item.imageUrl}`} 
+                                            alt={item.name}
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = 'https://via.placeholder.com/80';
+                                            }}
+                                        />
+                                        <span className="item-quantity-badge">{item.quantity}</span>
+                                    </div>
+                                    <div className="item-info">
+                                        <h4>{item.name}</h4>
+                                        <p>${item.price.toFixed(2)} × {item.quantity}</p>
+                                    </div>
+                                    <div className="item-total">
+                                        ${(item.price * item.quantity).toFixed(2)}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div className="order-totals">
+                            <div className="total-row">
+                                <span>Subtotal</span>
+                                <span>${subtotal}</span>
                             </div>
-
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>Last Name*</label>
-                                <input
-                                    type="text"
-                                    name="lastName"
-                                    value={formData.lastName}
-                                    onChange={handleChange}
-                                    required
-                                    style={styles.input}
-                                />
+                            <div className="total-row">
+                                <span>Shipping</span>
+                                <span>{shipping === '0.00' ? 'FREE' : `$${shipping}`}</span>
                             </div>
+                            <div className="total-row">
+                                <span>Tax</span>
+                                <span>${tax}</span>
+                            </div>
+                            <div className="total-row grand-total">
+                                <span>Total</span>
+                                <span>${total}</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>Email*</label>
+                <div className="checkout-form-panel">
+                    {activeStep === 1 && (
+                        <div className="form-section">
+                            <div className="section-header">
+                                {isMobile && <div className="step-indicator">Step 1 of 3</div>}
+                                <h2><HiOutlineUser /> Personal Information</h2>
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>Email Address*</label>
                                 <input
                                     type="email"
                                     name="email"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    required
-                                    style={styles.input}
+                                    placeholder="your@email.com"
+                                    className={errors.email ? 'error' : ''}
                                 />
+                                {errors.email && <span className="error-message">{errors.email}</span>}
                             </div>
-
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>Phone*</label>
+                            
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>First Name*</label>
+                                    <input
+                                        type="text"
+                                        name="firstName"
+                                        value={formData.firstName}
+                                        onChange={handleChange}
+                                        placeholder="John"
+                                        className={errors.firstName ? 'error' : ''}
+                                    />
+                                    {errors.firstName && <span className="error-message">{errors.firstName}</span>}
+                                </div>
+                                <div className="form-group">
+                                    <label>Last Name*</label>
+                                    <input
+                                        type="text"
+                                        name="lastName"
+                                        value={formData.lastName}
+                                        onChange={handleChange}
+                                        placeholder="Doe"
+                                        className={errors.lastName ? 'error' : ''}
+                                    />
+                                    {errors.lastName && <span className="error-message">{errors.lastName}</span>}
+                                </div>
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>Phone Number*</label>
                                 <input
                                     type="tel"
                                     name="phone"
                                     value={formData.phone}
                                     onChange={handleChange}
-                                    required
-                                    style={styles.input}
+                                    placeholder="(123) 456-7890"
+                                    className={errors.phone ? 'error' : ''}
                                 />
+                                {errors.phone && <span className="error-message">{errors.phone}</span>}
                             </div>
-
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>Address*</label>
+                            
+                            <div className="form-actions">
+                                <button type="button" className="btn btn-next" onClick={nextStep}>
+                                    {isMobile ? 'Continue' : 'Continue to Shipping'}
+                                    {!isMobile && <FaArrowRight style={{marginLeft: '8px'}} />}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {activeStep === 2 && (
+                        <div className="form-section">
+                            <div className="section-header">
+                                {isMobile && <div className="step-indicator">Step 2 of 3</div>}
+                                <h2><HiOutlineLocationMarker /> Shipping Address</h2>
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>Street Address*</label>
                                 <input
                                     type="text"
                                     name="address"
                                     value={formData.address}
                                     onChange={handleChange}
-                                    required
-                                    style={styles.input}
+                                    placeholder="123 Main St"
+                                    className={errors.address ? 'error' : ''}
                                 />
+                                {errors.address && <span className="error-message">{errors.address}</span>}
                             </div>
-
-                            <div style={styles.grid}>
-                                <div style={styles.inputGroup}>
-                                    <label style={styles.label}>City*</label>
+                            
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label>City*</label>
                                     <input
                                         type="text"
                                         name="city"
                                         value={formData.city}
                                         onChange={handleChange}
-                                        required
-                                        style={styles.input}
+                                        placeholder="New York"
+                                        className={errors.city ? 'error' : ''}
                                     />
+                                    {errors.city && <span className="error-message">{errors.city}</span>}
                                 </div>
-
-                                <div style={styles.inputGroup}>
-                                    <label style={styles.label}>State*</label>
+                                <div className="form-group">
+                                    <label>State*</label>
                                     <input
                                         type="text"
                                         name="state"
                                         value={formData.state}
                                         onChange={handleChange}
-                                        required
-                                        style={styles.input}
+                                        placeholder="NY"
+                                        className={errors.state ? 'error' : ''}
                                     />
+                                    {errors.state && <span className="error-message">{errors.state}</span>}
                                 </div>
                             </div>
-
-                            <div style={styles.inputGroup}>
-                                <label style={styles.label}>ZIP Code*</label>
+                            
+                            <div className="form-group">
+                                <label>ZIP Code*</label>
                                 <input
                                     type="text"
                                     name="zipCode"
                                     value={formData.zipCode}
                                     onChange={handleChange}
-                                    required
-                                    style={styles.input}
+                                    placeholder="10001"
+                                    className={errors.zipCode ? 'error' : ''}
                                 />
+                                {errors.zipCode && <span className="error-message">{errors.zipCode}</span>}
+                            </div>
+                            
+                            <div className="form-actions">
+                                <button type="button" className="btn btn-outline" onClick={prevStep}>
+                                    <FaArrowLeft style={{marginRight: '8px'}} />
+                                    Back
+                                </button>
+                                <button type="button" className="btn btn-next" onClick={nextStep}>
+                                    {isMobile ? 'Continue' : 'Continue to Payment'}
+                                    {!isMobile && <FaArrowRight style={{marginLeft: '8px'}} />}
+                                </button>
                             </div>
                         </div>
-
-                        {/* Payment Information */}
-                        <div style={styles.section}>
-                            <h2 style={styles.sectionTitle}>Payment Method</h2>
-
-                            <div style={styles.radioGroup}>
-                                <label style={styles.radioLabel}>
+                    )}
+                    
+                    {activeStep === 3 && (
+                        <form onSubmit={handleSubmit} className="form-section">
+                            <div className="section-header">
+                                {isMobile && <div className="step-indicator">Step 3 of 3</div>}
+                                <h2><HiOutlineCreditCard /> Payment Method</h2>
+                            </div>
+                            
+                            <div className="payment-options">
+                                <label className={`payment-option ${formData.paymentMethod === 'cod' ? 'selected' : ''}`}>
                                     <input
                                         type="radio"
                                         name="paymentMethod"
                                         value="cod"
                                         checked={formData.paymentMethod === 'cod'}
                                         onChange={handleChange}
-                                        style={styles.radioInput}
                                     />
-                                    Cash on Delivery (COD)
+                                    <div className="payment-content">
+                                        <FaMoneyBillWave className="payment-icon" />
+                                        <div className="payment-details">
+                                            <span className="payment-title">Cash on Delivery</span>
+                                            <span className="payment-description">Pay when you receive your order</span>
+                                        </div>
+                                    </div>
                                 </label>
-
-                                <label style={styles.radioLabel}>
+                                
+                                <label className={`payment-option ${formData.paymentMethod === 'online' ? 'selected' : ''}`}>
                                     <input
                                         type="radio"
                                         name="paymentMethod"
                                         value="online"
                                         checked={formData.paymentMethod === 'online'}
                                         onChange={handleChange}
-                                        style={styles.radioInput}
                                     />
-                                    Online Payment
+                                    <div className="payment-content">
+                                        <FaCreditCard className="payment-icon" />
+                                        <div className="payment-details">
+                                            <span className="payment-title">Credit/Debit Card</span>
+                                            <span className="payment-description">Secure online payment</span>
+                                        </div>
+                                    </div>
                                 </label>
                             </div>
-
+                            
                             {formData.paymentMethod === 'online' && (
-                                <>
-                                    <div style={styles.inputGroup}>
-                                        <label style={styles.label}>Card Number*</label>
+                                <div className="card-details-section">
+                                    <div className="form-group">
+                                        <label>Card Number*</label>
                                         <input
                                             type="text"
                                             name="cardNumber"
                                             value={formData.cardNumber}
                                             onChange={handleChange}
-                                            required={formData.paymentMethod === 'online'}
                                             placeholder="1234 5678 9012 3456"
-                                            style={styles.input}
+                                            className={errors.cardNumber ? 'error' : ''}
                                         />
+                                        {errors.cardNumber && <span className="error-message">{errors.cardNumber}</span>}
                                     </div>
-
-                                    <div style={styles.grid}>
-                                        <div style={styles.inputGroup}>
-                                            <label style={styles.label}>Expiry Date*</label>
+                                    
+                                    <div className="form-row">
+                                        <div className="form-group">
+                                            <label>Expiry Date*</label>
                                             <input
                                                 type="text"
                                                 name="expiryDate"
                                                 value={formData.expiryDate}
                                                 onChange={handleChange}
-                                                required={formData.paymentMethod === 'online'}
                                                 placeholder="MM/YY"
-                                                style={styles.input}
+                                                className={errors.expiryDate ? 'error' : ''}
                                             />
+                                            {errors.expiryDate && <span className="error-message">{errors.expiryDate}</span>}
                                         </div>
-
-                                        <div style={styles.inputGroup}>
-                                            <label style={styles.label}>CVV*</label>
+                                        
+                                        <div className="form-group">
+                                            <label>CVV*</label>
                                             <input
                                                 type="text"
                                                 name="cvv"
                                                 value={formData.cvv}
                                                 onChange={handleChange}
-                                                required={formData.paymentMethod === 'online'}
-                                                style={styles.input}
+                                                placeholder="123"
+                                                className={errors.cvv ? 'error' : ''}
                                             />
+                                            {errors.cvv && <span className="error-message">{errors.cvv}</span>}
                                         </div>
                                     </div>
-                                </>
+                                </div>
                             )}
-
-                            {/* Order Summary */}
-                            <div style={styles.summary}>
-                                <h3 style={styles.summaryTitle}>Order Summary</h3>
-
-                                <div style={styles.itemsContainer}>
-                                    {cartItems.map(item => (
-                                        <div key={item.id} style={styles.itemRow}>
-                                            <div style={styles.itemImageContainer}>
-                                                <img
-                                                    // src={`${API}/${item.image}`}
-                                                      src={`http://farmley-backend-1.onrender.com${item.imageUrl}`}
-                                                    alt={item.name}
-                                                    style={styles.itemImage}
-                                                    onError={(e) => {
-                                                        e.target.onerror = null;
-                                                        e.target.src = 'https://examplefiles.org/img/example-image-files.svg'
-                                                    }}
-                                                />
-                                            </div>
-                                            <div style={styles.itemDetails}>
-                                                <span style={styles.itemName}>{item.name}</span>
-                                                <span style={styles.itemQuantity}>Qty: {item.quantity}</span>
-                                            </div>
-                                            <div style={styles.itemPrice}>
-                                                ${(item.price * item.quantity).toFixed(2)}
-                                            </div>
+                            
+                            {isMobile && (
+                                <div className="mobile-order-summary">
+                                    <h4>Order Summary</h4>
+                                    <div className="mobile-totals">
+                                        <div className="total-row">
+                                            <span>Subtotal</span>
+                                            <span>${subtotal}</span>
                                         </div>
-                                    ))}
+                                        <div className="total-row">
+                                            <span>Shipping</span>
+                                            <span>{shipping === '0.00' ? 'FREE' : `$${shipping}`}</span>
+                                        </div>
+                                        <div className="total-row">
+                                            <span>Tax</span>
+                                            <span>${tax}</span>
+                                        </div>
+                                        <div className="total-row grand-total">
+                                            <span>Total</span>
+                                            <span>${total}</span>
+                                        </div>
+                                    </div>
                                 </div>
-
-                                <div style={styles.summaryRow}>
-                                    <span>Subtotal:</span>
-                                    <span>${subtotal}</span>
-                                </div>
-
-                                <div style={styles.summaryRow}>
-                                    <span>Shipping:</span>
-                                    <span>${shipping}</span>
-                                </div>
-
-                                <div style={{ ...styles.summaryRow, ...styles.totalRow }}>
-                                    <span>Total:</span>
-                                    <span>${total}</span>
-                                </div>
+                            )}
+                            
+                            <div className="form-actions">
+                                <button type="button" className="btn btn-outline" onClick={prevStep}>
+                                    <FaArrowLeft style={{marginRight: '8px'}} />
+                                    Back
+                                </button>
+                                <button type="submit" className="btn btn-primary" disabled={loading}>
+                                    {loading ? (
+                                        <span className="loading-spinner"></span>
+                                    ) : (
+                                        `Pay $${total}`
+                                    )}
+                                </button>
                             </div>
-                        </div>
-                    </div>
-
-                    <button
-                        type="submit"
-                        style={styles.submitButton}
-                        disabled={loading}
-                    >
-                        {loading ? 'Processing...' : 'Place Order'}
-                    </button>
-                </form>
+                        </form>
+                    )}
+                </div>
             </div>
         </div>
     );
-};
-
-// Styles
-const styles = {
-    container: {
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-        backgroundColor: '#f8f9fa',
-        padding: '20px',
-        minHeight: '100vh'
-    },
-    checkoutContainer: {
-        maxWidth: '1000px',
-        margin: '0 auto',
-        backgroundColor: 'white',
-        borderRadius: '10px',
-        padding: '30px',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
-    },
-    title: {
-        textAlign: 'center',
-        color: '#2c3e50',
-        marginBottom: '30px',
-        fontSize: '28px',
-        fontWeight: '600'
-    },
-    form: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px'
-    },
-    formGrid: {
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '30px',
-        '@media (max-width: 768px)': {
-            gridTemplateColumns: '1fr'
-        }
-    },
-    section: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '15px'
-    },
-    sectionTitle: {
-        fontSize: '18px',
-        color: '#34495e',
-        marginBottom: '10px',
-        paddingBottom: '10px',
-        borderBottom: '1px solid #ecf0f1',
-        fontWeight: '500'
-    },
-    inputGroup: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '5px'
-    },
-    label: {
-        fontSize: '14px',
-        color: '#7f8c8d',
-        fontWeight: '500'
-    },
-    input: {
-        padding: '12px',
-        border: '1px solid #ddd',
-        borderRadius: '6px',
-        fontSize: '15px',
-        transition: 'border 0.3s',
-        ':focus': {
-            outline: 'none',
-            borderColor: '#3498db',
-            boxShadow: '0 0 0 2px rgba(52,152,219,0.2)'
-        }
-    },
-    grid: {
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '15px'
-    },
-    radioGroup: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
-        marginBottom: '15px'
-    },
-    radioLabel: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        fontSize: '15px',
-        color: '#34495e',
-        cursor: 'pointer'
-    },
-    radioInput: {
-        margin: '0',
-        width: '16px',
-        height: '16px',
-        cursor: 'pointer'
-    },
-    summary: {
-        backgroundColor: '#f8f9fa',
-        padding: '20px',
-        borderRadius: '8px',
-        marginTop: '20px'
-    },
-    summaryTitle: {
-        fontSize: '16px',
-        marginBottom: '15px',
-        color: '#2c3e50'
-    },
-    summaryItem: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        fontSize: '14px',
-        color: '#7f8c8d',
-        marginBottom: '8px'
-    },
-    summaryRow: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        fontSize: '14px',
-        marginBottom: '8px'
-    },
-    totalRow: {
-        fontWeight: 'bold',
-        color: '#2c3e50',
-        fontSize: '16px',
-        marginTop: '10px',
-        paddingTop: '10px',
-        borderTop: '1px solid #ecf0f1'
-    },
-    submitButton: {
-        backgroundColor: '#27ae60',
-        color: 'white',
-        border: 'none',
-        padding: '14px',
-        fontSize: '16px',
-        borderRadius: '6px',
-        cursor: 'pointer',
-        fontWeight: '600',
-        transition: 'background-color 0.3s',
-        marginTop: '20px',
-        ':hover': {
-            backgroundColor: '#2ecc71'
-        },
-        ':disabled': {
-            backgroundColor: '#95a5a6',
-            cursor: 'not-allowed'
-        }
-    },
-    successContainer: {
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#f8f9fa',
-        padding: '20px'
-    },
-    successCard: {
-        backgroundColor: 'white',
-        borderRadius: '10px',
-        padding: '40px',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-        textAlign: 'center',
-        maxWidth: '500px',
-        width: '100%'
-    },
-    successTitle: {
-        color: '#27ae60',
-        fontSize: '24px',
-        marginBottom: '20px'
-    },
-    successText: {
-        color: '#7f8c8d',
-        fontSize: '16px',
-        marginBottom: '15px',
-        lineHeight: '1.6'
-    },
-    continueButton: {
-        backgroundColor: '#3498db',
-        color: 'white',
-        border: 'none',
-        padding: '12px 24px',
-        fontSize: '16px',
-        borderRadius: '6px',
-        cursor: 'pointer',
-        fontWeight: '600',
-        transition: 'background-color 0.3s',
-        marginTop: '20px',
-        ':hover': {
-            backgroundColor: '#2980b9'
-        }
-    },
-    itemsContainer: {
-        marginBottom: '15px',
-        borderBottom: '1px solid #ecf0f1',
-        paddingBottom: '15px'
-    },
-    itemRow: {
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: '12px',
-        gap: '15px'
-    },
-    itemImageContainer: {
-        width: '60px',
-        height: '60px',
-        borderRadius: '4px',
-        overflow: 'hidden',
-        backgroundColor: '#f8f9fa'
-    },
-    itemImage: {
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover'
-    },
-    itemDetails: {
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '4px'
-    },
-    itemName: {
-        fontSize: '14px',
-        fontWeight: '500',
-        color: '#2c3e50'
-    },
-    itemQuantity: {
-        fontSize: '12px',
-        color: '#7f8c8d'
-    },
-    itemPrice: {
-        fontWeight: '600',
-        color: '#2c3e50'
-    },
-
 };
 
 export default CheckoutPage;

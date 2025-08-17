@@ -6,6 +6,7 @@ import Ingredients from "./Ingredients";
 import FrontPage from './FrontPage';
 import { lazy, Suspense } from 'react';
 import ContactUs from './ContactUs';
+import FeaturedProducts from '../components/ProductDetail/FeaturedProducts';
 
 
 
@@ -22,7 +23,7 @@ export const Home = () => {
     
     {/* Add the components of different pages here */}
     <section id="products">
-      <ProductsPage />
+      <FeaturedProducts />
     </section>
 
     <section id="offers">

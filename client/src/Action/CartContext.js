@@ -1,6 +1,7 @@
 import { createContext, useEffect, useState } from "react";
 import API from "../Axios/axiosInstance";
 import { useNavigate } from "react-router-dom";
+const API_URL = process.env.REACT_APP_API_BASE_URL;
 
 export const CartContext = createContext()
 
@@ -12,7 +13,7 @@ export const CartProvider = ({children})=>{
             const token = localStorage.getItem("token");
             const userId = localStorage.getItem("userData");
     
-            const res = await API.get(`/cart/addToCart?userId=${userId}`, {
+            const res = await API.get(`${API_URL}cart/addToCart?userId=${userId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

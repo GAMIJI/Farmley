@@ -1,64 +1,60 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../../Axios/axiosInstance";
-import "bootstrap/dist/css/bootstrap.min.css";
+import axios from "axios";
+import { StarFill, StarHalf, Search, CartPlus, CartCheck } from "react-bootstrap-icons";
 import "./ProductList.css";
 
 const ProductList = () => {
+  const API_URL = process.env.REACT_APP_API_BASE_URL;
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [clickedItems, setClickedItems] = useState({});
   const [cartItems, setCartItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const sliderRefs = useRef({});
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
-        const response = await API.get("/products/");
-        console.log("✅ Response:", response.data);
-
-        if (Array.isArray(response.data)) {
-          setProducts(response.data);
+        const [productsRes, cartRes] = await Promise.all([
+          axios.get(`${API_URL}products`),
+          fetchCartItems()
+        ]);
+        
+        if (Array.isArray(productsRes.data)) {
+          setProducts(productsRes.data);
         } else {
-          console.error("🚨 Unexpected response data:", response.data);
-          setProducts([]); // prevent crash
+          console.error("Unexpected products data:", productsRes.data);
+          setProducts([]);
         }
       } catch (error) {
-        console.error("❌ Error fetching products:", error);
-        setProducts([]); // prevent crash
+        console.error("Error fetching data:", error);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-
-
-    fetchProducts();
-    fetchCartItems(); // load cart from backend
+    fetchData();
   }, []);
 
   const fetchCartItems = async () => {
-    const userId = localStorage.getItem("userData");
     const token = localStorage.getItem("token");
-
-    console.log("dfvbyudfj", token);
-
-
-    if (!userId || !token) return;
+    if (!token) return [];
 
     try {
-      const res = await API.get(`/cart/addToCart`, {
+      const res = await axios.get(`${API_URL}cart/addToCart`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCartItems(res.data.data || []);
+      return res.data.data || [];
     } catch (error) {
       console.error("Error fetching cart items:", error);
+      return [];
     }
   };
 
-  const handleCart = async (_id) => {
+  const handleAddToCart = async (productId) => {
     const userId = localStorage.getItem("userData");
     const token = localStorage.getItem("token");
 
@@ -67,35 +63,22 @@ const ProductList = () => {
       return navigate("/login");
     }
 
-    if (!_id || cartItems.some((item) => item.productId.id === _id)) return;
-
-    setClickedItems((prev) => ({ ...prev, [_id]: true }));
+    if (cartItems.some(item => item.productId._id === productId)) return;
 
     try {
-      await API.post(
-        "/cart/add",
-        {
-          userId,
-          productId: _id,
-          quantity: 1,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // ✅ Include token here
-          },
-        }
+      await axios.post(
+        `${API_URL}cart/add`,
+        { userId, productId, quantity: 1 },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      await fetchCartItems(); // Refresh cart items
+      await fetchCartItems();
     } catch (error) {
       console.error("Error adding to cart:", error);
-      alert("Something went wrong while adding to cart.");
-    } finally {
-      setClickedItems((prev) => ({ ...prev, [_id]: false }));
+      alert("Failed to add item to cart");
     }
   };
 
-  const handleDetails = (id) => {
+  const handleProductDetails = (id) => {
     localStorage.setItem("productid", id);
     navigate("/productdetail");
   };
@@ -103,160 +86,174 @@ const ProductList = () => {
   const scrollSlider = (category, direction) => {
     const slider = sliderRefs.current[category];
     if (slider) {
-      const scrollAmount = 300;
       slider.scrollBy({
-        left: direction === "right" ? scrollAmount : -scrollAmount,
+        left: direction === "right" ? 300 : -300,
         behavior: "smooth",
       });
     }
   };
 
-  const filteredProducts = products.filter((product) =>
+  // Filter and group products
+  const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const groupedByCategory = filteredProducts.reduce((acc, product) => {
+  const groupedProducts = filteredProducts.reduce((acc, product) => {
     const category = product.category || "Uncategorized";
     if (!acc[category]) acc[category] = [];
     acc[category].push(product);
     return acc;
   }, {});
 
+  // Generate random ratings
+  const generateRating = () => {
+    const rating = (Math.random() * 5).toFixed(1);
+    return {
+      value: rating,
+      stars: Array(5).fill(0).map((_, i) => {
+        if (i < Math.floor(rating)) return <StarFill key={i} className="text-warning" />;
+        if (i === Math.floor(rating) && rating % 1 >= 0.5) return <StarHalf key={i} className="text-warning" />;
+        return <StarFill key={i} className="text-secondary" />;
+      })
+    };
+  };
+
   return (
-    <div className="container mt-3">
-      <div className="product-header mb-3">
-        <h2 className="h4 mb-2">Popular Products</h2>
-
-        <div className="search-bar-desktop d-none d-md-block">
-          <form className="d-flex align-items-center" onSubmit={(e) => e.preventDefault()}>
-            <input
-              className="form-control search-input"
-              type="search"
-              placeholder="Search anything..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                border: "1px solid #ccc",
-                borderRadius: "30px",
-                paddingLeft: "15px",
-                fontSize: "1rem",
-                height: "45px",
-                width: "250px",
-              }}
-            />
-            <button className="btn btn-search ms-2" type="submit">
-              Search
-            </button>
-          </form>
-        </div>
-
-        <div className="search-toggle-mobile d-block d-md-none w-100 mt-2">
-          <form className="d-flex align-items-center" onSubmit={(e) => e.preventDefault()}>
-            <input
-              className="form-control"
-              type="search"
-              placeholder="Search anything..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                border: "1px solid #ccc",
-                borderRadius: "30px",
-                paddingLeft: "15px",
-                fontSize: "1rem",
-                height: "45px",
-              }}
-            />
-            <button className="btn btn-search ms-2" type="submit">
-              Search
-            </button>
+    <div className="product-list-container">
+      {/* Hero Search Section */}
+      <div className="hero-search-section">
+        <div className="hero-content">
+          <h1>Discover Amazing Products</h1>
+          <p>Shop the latest trends and best deals</p>
+          
+          <form onSubmit={(e) => e.preventDefault()}>
+            <div className="search-input-group">
+              <span className="search-icon">
+                <Search size={20} />
+              </span>
+              <input
+                type="search"
+                placeholder="Search for products, brands, and more..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <button type="submit">
+                Search
+              </button>
+            </div>
           </form>
         </div>
       </div>
 
-      {loading ? (
-        <div className="text-center">Loading products...</div>
-      ) : (
-        Object.entries(groupedByCategory).map(([categoryName, items]) => (
-          <div key={categoryName} className="mb-4">
-            <h3 className="mb-2 h5">{categoryName}</h3>
-
-            <div className="d-flex align-items-center">
-              <button
-                className="btn btn-outline-secondary btn-sm me-1"
-                onClick={() => scrollSlider(categoryName, "left")}
-              >
-                ←
-              </button>
-
-              <div
-                className="d-flex overflow-auto gap-2 pb-2 px-1"
-                ref={(el) => (sliderRefs.current[categoryName] = el)}
-                style={{ scrollBehavior: "smooth", width: "100%" }}
-              >
-                {items.map((product) => {
-                  const isInCart = cartItems.some((item) => item.productId._id === product._id);
-
-                  return (
-                    <div key={product._id} className="card product-card">
-                      <div onClick={() => handleDetails(product._id)}>
-                        <img
-                          src={`http://farmley-backend-1.onrender.com${product.imageUrl}`}
-                          className="card-img-top product-image"
-                          alt={product.name}
-                          style={{
-                            height: "100px",
-                            objectFit: "contain",
-                            padding: "0.5rem",
-                          }}
-                        />
-                        <div className="card-body p-2">
-                          <h6 className="card-title mb-1" style={{ fontSize: "0.9rem" }}>
-                            {product.name.length > 20
-                              ? `${product.name.substring(0, 20)}...`
-                              : product.name}
-                          </h6>
-                          <div className="d-flex flex-column">
-                            <div className="mb-1">
-                              <span className="h6 mb-0">₹{product.price}</span>
-                              {product.oldPrice && (
-                                <small className="old-price ms-1">₹{product.oldPrice}</small>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="card-footer bg-light p-1 text-center">
-                        <button
-                          style={{ width: "100%" }}
-                          className={`cart-button ${clickedItems[product._id] ? "clicked" : ""}`}
-                          onClick={() => handleCart(product._id)}
-                          disabled={isInCart}
-                        >
-                          <span className="add-to-cart">
-                            {isInCart ? "" : "Add to Cart"}
-                          </span>
-                          <span className="added">
-                            {isInCart ? "Added" : ""}
-                          </span>
-                          <i className="fas fa-shopping-cart"></i>
-                          <i className="fas fa-box"></i>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+      {/* Main Content */}
+      <div className="product-list-content">
+        {loading ? (
+          <div className="loading-state">
+            <div className="spinner"></div>
+            <p>Loading products...</p>
+          </div>
+        ) : Object.entries(groupedProducts).map(([category, items]) => (
+          <div key={category} className="product-category-section">
+            <div className="category-header">
+              <h2>{category}</h2>
+              <div className="slider-controls">
+                <button onClick={() => scrollSlider(category, "left")}>
+                  &larr;
+                </button>
+                <button onClick={() => scrollSlider(category, "right")}>
+                  &rarr;
+                </button>
               </div>
+            </div>
 
-              <button
-                className="btn btn-outline-secondary btn-sm ms-1"
-                onClick={() => scrollSlider(categoryName, "right")}
-              >
-                →
-              </button>
+            <div
+              className="product-slider"
+              ref={(el) => (sliderRefs.current[category] = el)}
+            >
+              {items.map(product => {
+                const isInCart = cartItems.some(item => item.productId._id === product._id);
+                const rating = generateRating();
+                const discountPercent = product.oldPrice
+                  ? Math.round((1 - product.price / product.oldPrice) * 100)
+                  : 0;
+
+                return (
+                  <div key={product._id} className="product-card">
+                    <div 
+                      className="product-image-container"
+                      onClick={() => handleProductDetails(product._id)}
+                    >
+                      <img
+                        src={`${API_URL.replace('/api/', '')}${product.imageUrl}`}
+                        alt={product.name}
+                        onError={(e) => {
+                          e.target.src = '/placeholder-product.png';
+                          e.target.style.objectFit = 'contain';
+                        }}
+                      />
+                      
+                      {product.oldPrice && (
+                        <div className="discount-badge">
+                          {discountPercent}% OFF
+                        </div>
+                      )}
+                      <div className="quick-view">Quick View</div>
+                    </div>
+
+                    <div className="product-info">
+                      <h3 className="product-title" title={product.name}>
+                        {product.name}
+                      </h3>
+                      
+                      <div className="product-rating">
+                        <div className="stars">
+                          {rating.stars}
+                        </div>
+                        <span>({rating.value})</span>
+                        <span className="reviews">· 42 reviews</span>
+                      </div>
+                      
+                      <div className="product-pricing">
+                        <span className="current-price">₹{product.price}</span>
+                        {product.oldPrice && (
+                          <span className="original-price">₹{product.oldPrice}</span>
+                        )}
+                      </div>
+                      
+                      <button
+                        className={`add-to-cart-btn ${isInCart ? 'in-cart' : ''}`}
+                        onClick={() => handleAddToCart(product._id)}
+                        disabled={isInCart}
+                      >
+                        {isInCart ? (
+                          <>
+                            <CartCheck size={16} /> Added to Cart
+                          </>
+                        ) : (
+                          <>
+                            <CartPlus size={16} /> Add to Cart
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        ))
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {!loading && Object.keys(groupedProducts).length === 0 && (
+        <div className="empty-state">
+          <div className="empty-icon">😕</div>
+          <h3>No products found</h3>
+          <p>Try adjusting your search or filter to find what you're looking for.</p>
+          <button onClick={() => setSearchTerm('')}>
+            Clear Search
+          </button>
+        </div>
       )}
     </div>
   );

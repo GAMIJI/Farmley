@@ -1,183 +1,158 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight } from 'react-bootstrap-icons';
+import '../style/FrontPage.css';
 
 const FrontPage = () => {
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleNavigation = () => {
     navigate("/ProductsPage");
   };
 
-  // Responsive inline styles
-  const styles = {
-    container: {
-      // maxWidth: '1200px',
-      // margin: '0 auto',
-      padding: '20px',
-      width: '100%',
-      boxSizing: 'border-box',
+  const banners = [
+    {
+      id: 1,
+      desktopImage: "https://www.farmley.com/cdn/shop/files/rd_with_date_bites-80_1400x.jpg?v=1715246493",
+      mobileImage: "https://www.farmley.com/cdn/shop/files/Date_Bites_Mobile_700x.jpg?v=1751887974",
+      alt: "Healthy snacks",
+      title: "Premium Healthy Snacks",
+      subtitle: "Discover our nutritious date bites"
     },
-    carousel: {
-      borderRadius: '12px',
-      overflow: 'hidden',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-      marginBottom: '30px',
+    {
+      id: 2,
+      desktopImage: "https://www.farmley.com/cdn/shop/files/rd_with_snack_mix-80_1400x.jpg?v=1715246522",
+      mobileImage: "https://via.placeholder.com/600x900/2196F3/FFFFFF?text=Nut+Mixes",
+      alt: "Nut mixes",
+      title: "Crunchy Nut Mixes",
+      subtitle: "Perfect protein-packed snacks"
     },
-    carouselImage: {
-      width: '100%',
-      height: 'auto',
-      maxHeight: '500px',
-      objectFit: 'cover',
-      cursor: 'pointer',
-      transition: 'transform 0.3s ease',
-      '@media (max-width: 768px)': {
-        maxHeight: '300px',
-      },
-      '@media (max-width: 480px)': {
-        maxHeight: '200px',
-      },
-    },
-    benefitsContainer: {
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '30px',
-      flexWrap: 'wrap',
-      margin: '40px 0',
-      '@media (max-width: 768px)': {
-        gap: '15px',
-        margin: '20px 0',
-      },
-    },
-    benefitItem: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
-      backgroundColor: '#f8f9fa',
-      padding: '12px 20px',
-      borderRadius: '50px',
-      fontSize: '16px',
-      fontWeight: '500',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-      '@media (max-width: 768px)': {
-        fontSize: '14px',
-        padding: '8px 15px',
-      },
-      '@media (max-width: 480px)': {
-        fontSize: '12px',
-        padding: '6px 12px',
-        borderRadius: '30px',
-      },
-    },
-    checkIcon: {
-      width: '18px',
-      height: '18px',
-      '@media (max-width: 480px)': {
-        width: '14px',
-        height: '14px',
-      },
-    },
-    carouselControl: {
-      backgroundColor: 'rgba(0,0,0,0.2)',
-      width: '40px',
-      height: '40px',
-      borderRadius: '50%',
-      top: '50%',
-      transform: 'translateY(-50%)',
-      '@media (max-width: 768px)': {
-        width: '30px',
-        height: '30px',
-      },
-    },
-    carouselIndicator: {
-      '@media (max-width: 480px)': {
-        marginBottom: '10px',
-      },
-    },
+    {
+      id: 3,
+      desktopImage: "https://www.farmley.com/cdn/shop/files/Farmley_Cranberry_Apricots_1400x.png?v=1715062209",
+      mobileImage: "https://via.placeholder.com/600x900/FF9800/FFFFFF?text=Dried+Fruits",
+      alt: "Dried fruits",
+      title: "Natural Dried Fruits",
+      subtitle: "No added sugar, just nature's sweetness"
+    }
+  ];
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
   };
 
-  // Function to apply responsive styles
-  const applyStyles = (baseStyles) => {
-    return {
-      ...baseStyles,
-      ...(window.innerWidth <= 768 && baseStyles['@media (max-width: 768px)']),
-      ...(window.innerWidth <= 480 && baseStyles['@media (max-width: 480px)']),
-    };
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
+  };
+
+  const goToSlide = (index) => {
+    setCurrentSlide(index);
   };
 
   return (
-    <div style={applyStyles(styles.container)}>
-      {/* Carousel */}
-      <div id="carouselExampleIndicators" className="carousel slide" style={applyStyles(styles.carousel)}>
-        <div className="carousel-indicators" style={applyStyles(styles.carouselIndicator)}>
-          <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" className="active" aria-current="true" aria-label="Slide 1"></button>
-          <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
-          <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+    <div className="front-page-container">
+      {/* Banner Carousel with Navigation */}
+      <div className="banner-carousel">
+        <div className="slide-container">
+          {banners.map((banner, index) => (
+            <div 
+              key={banner.id} 
+              className={`banner-slide ${index === currentSlide ? 'active' : ''}`}
+              onClick={handleNavigation}
+            >
+              <img
+                src={isMobile ? banner.mobileImage : banner.desktopImage}
+                alt={banner.alt}
+                className="banner-image"
+              />
+              <div className="slide-content">
+                <h2>{banner.title}</h2>
+                <p>{banner.subtitle}</p>
+                <button className="shop-now-btn">Shop Now</button>
+              </div>
+            </div>
+          ))}
         </div>
         
-        <div className="carousel-inner">
-          <div className="carousel-item active" onClick={handleNavigation}>
-            <img 
-              src="https://www.farmley.com/cdn/shop/files/rd_with_date_bites-80_1400x.jpg?v=1715246493" 
-              className="d-block w-100" 
-              alt="Healthy snacks"
-              style={applyStyles(styles.carouselImage)}
-            />
-          </div>
-          <div className="carousel-item" onClick={handleNavigation}>
-            <img 
-              src="https://www.farmley.com/cdn/shop/files/rd_with_snack_mix-80_1400x.jpg?v=1715246522" 
-              className="d-block w-100" 
-              alt="Nut mixes"
-              style={applyStyles(styles.carouselImage)}
-            />
-          </div>
-          <div className="carousel-item" onClick={handleNavigation}>
-            <img 
-              src="https://www.farmley.com/cdn/shop/files/Farmley_Cranberry_Apricots_1400x.png?v=1715062209" 
-              className="d-block w-100" 
-              alt="Dried fruits"
-              style={applyStyles(styles.carouselImage)}
-            />
-          </div>
-        </div>
+        {/* Navigation Arrows */}
+        <button className="nav-arrow prev-arrow" onClick={prevSlide}>
+          <ChevronLeft size={24} />
+        </button>
+        <button className="nav-arrow next-arrow" onClick={nextSlide}>
+          <ChevronRight size={24} />
+        </button>
         
-        <button className="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev" style={applyStyles(styles.carouselControl)}>
-          <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-          <span className="visually-hidden">Previous</span>
-        </button>
-        <button className="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next" style={applyStyles(styles.carouselControl)}>
-          <span className="carousel-control-next-icon" aria-hidden="true"></span>
-          <span className="visually-hidden">Next</span>
-        </button>
+        {/* Slide Indicators */}
+        <div className="slide-indicators">
+          {banners.map((_, index) => (
+            <button
+              key={index}
+              className={`indicator ${index === currentSlide ? 'active' : ''}`}
+              onClick={() => goToSlide(index)}
+            />
+          ))}
+        </div>
       </div>
-      
+
       {/* Benefits Section */}
-      <div style={applyStyles(styles.benefitsContainer)}>
-        <div style={applyStyles(styles.benefitItem)}>
+      <div className="benefits-container">
+        <div className="benefit-item">
           <img 
-            src="https://w7.pngwing.com/pngs/355/107/png-transparent-computer-icons-verify-silhouette-share-icon-check-mark-thumbnail.png" 
+            src="https://cdn-icons-png.flaticon.com/512/5610/5610944.png" 
             alt="Check mark" 
-            style={applyStyles(styles.checkIcon)}
+            className="check-icon"
           />
-          100% Plant-Based
+          <span>100% Plant-Based</span>
         </div>
         
-        <div style={applyStyles(styles.benefitItem)}>
+        <div className="benefit-item">
           <img 
-            src="https://w7.pngwing.com/pngs/355/107/png-transparent-computer-icons-verify-silhouette-share-icon-check-mark-thumbnail.png" 
+            src="https://cdn-icons-png.flaticon.com/512/5610/5610944.png" 
             alt="Check mark" 
-            style={applyStyles(styles.checkIcon)}
+            className="check-icon"
           />
-          Real Fruits, Nuts & SuperFood
+          <span>Real Fruits, Nuts & SuperFood</span>
         </div>
         
-        <div style={applyStyles(styles.benefitItem)}>
+        <div className="benefit-item">
           <img 
-            src="https://w7.pngwing.com/pngs/355/107/png-transparent-computer-icons-verify-silhouette-share-icon-check-mark-thumbnail.png" 
+            src="https://cdn-icons-png.flaticon.com/512/5610/5610944.png" 
             alt="Check mark" 
-            style={applyStyles(styles.checkIcon)}
+            className="check-icon"
           />
-          No Preservatives or Added Sugar
+          <span>No Preservatives or Added Sugar</span>
+        </div>
+      </div>
+
+      {/* Bottom Bar */}
+      <div className="bottom-bar">
+        <div className="bottom-bar-content  ">
+          <div className="bar-item">
+            <img src="https://cdn-icons-png.flaticon.com/512/3144/3144456.png" alt="Free Shipping" />
+            <span>Free Shipping</span>
+          </div>
+          <div className="bar-item">
+            <img src="https://cdn-icons-png.flaticon.com/512/929/929452.png" alt="Easy Returns" />
+            <span>Easy Returns</span>
+          </div>
+          <div className="bar-item">
+            <img src="https://cdn-icons-png.flaticon.com/512/3050/3050158.png" alt="Secure Payment" />
+            <span>Secure Payment</span>
+          </div>
+          <div className="bar-item">
+            <img src="https://cdn-icons-png.flaticon.com/512/3081/3081160.png" alt="24/7 Support" />
+            <span>24/7 Support</span>
+          </div>
         </div>
       </div>
     </div>

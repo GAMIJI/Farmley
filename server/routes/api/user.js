@@ -125,11 +125,24 @@ router.post("/login", async (req, res) => {
       if (err) {
         return res.status(500).json({ error: "Token generation failed" });
       }
-      res.json({ success: true, token: "Bearer " + token, user  });
+      res.json({ success: true, token: token, user  });
     });
   } catch (error) {
     console.error("❌ [LOGIN ERROR]:", error);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+router.get("/profile", authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({ success: true, user });
+  } catch (err) {
+    console.error("Profile Fetch Error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

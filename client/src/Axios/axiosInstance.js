@@ -1,7 +1,9 @@
 import axios from "axios";
+const API_URL = process.env.REACT_APP_API_BASE_URL;
+console.log("api instant", API_URL);
 
 const API = axios.create({
-  baseURL: "https://farmley-backend-1.onrender.com/api",
+  baseURL: `${API_URL}`,
   withCredentials: true, // ✅ important for CORS cookies
 });
 

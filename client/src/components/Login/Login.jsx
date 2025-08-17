@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import API from '../../Axios/axiosInstance';
 import './Login.css';
 import { Link, useNavigate } from 'react-router-dom';
-
+import axios from 'axios';
+const API_URL = process.env.REACT_APP_API_BASE_URL;
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -20,7 +21,7 @@ const Login = () => {
     setErrors({}); // Clear previous errors
 
     try {
-      const response = await API.post('/user/login', formData);
+      const response = await axios.post(`${API_URL}user/login`, formData);
       
       localStorage.setItem('userData', response?.data.user._id)
       if (response.data.success === true ) {
