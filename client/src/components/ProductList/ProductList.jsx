@@ -2,101 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { StarFill, StarHalf, Search, CartPlus, CartCheck } from "react-bootstrap-icons";
-import styled, { keyframes } from "styled-components";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import "./ProductList.css";
-
-// Styled Components for Auth Modal
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
-
-const AuthPrompt = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease;
-
-  .auth-modal {
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    text-align: center;
-    max-width: 400px;
-    width: 90%;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    animation: ${fadeIn} 0.3s ease;
-  }
-
-  h3 {
-    color: #333;
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
-  }
-
-  p {
-    color: #666;
-    margin-bottom: 1.5rem;
-    line-height: 1.5;
-  }
-
-  .button-group {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  button {
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 1rem;
-    min-width: 120px;
-  }
-
-  .login-btn {
-    background: #6e8efb;
-    color: white;
-    border: none;
-
-    &:hover {
-      background: #5a7df4;
-      transform: translateY(-2px);
-    }
-  }
-
-  .cancel-btn {
-    background: transparent;
-    border: 1px solid #ddd;
-    color: #666;
-
-    &:hover {
-      background: #f5f5f5;
-      transform: translateY(-2px);
-    }
-  }
-
-  @media (max-width: 480px) {
-    .auth-modal {
-      padding: 1.5rem;
-    }
-    
-    button {
-      padding: 0.6rem 1.2rem;
-      font-size: 0.9rem;
-    }
-  }
-`;
 
 const ProductList = () => {
   const API_URL = process.env.REACT_APP_API_BASE_URL;
@@ -105,10 +13,23 @@ const ProductList = () => {
   const [loading, setLoading] = useState(true);
   const [cartItems, setCartItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [pendingProductId, setPendingProductId] = useState(null);
-  const [addingToCart, setAddingToCart] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(null);
+  const [productRatings, setProductRatings] = useState({});
   const sliderRefs = useRef({});
+
+  // Generate stable rating based on product ID
+  const generateStableRating = (productId) => {
+    const hash = productId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const rating = (hash % 50) / 10; // Gives a rating between 0 and 4.9
+    return {
+      value: rating.toFixed(1),
+      stars: Array(5).fill(0).map((_, i) => {
+        if (i < Math.floor(rating)) return <StarFill key={i} className="text-warning" />;
+        if (i === Math.floor(rating) && rating % 1 >= 0.5) return <StarHalf key={i} className="text-warning" />;
+        return <StarFill key={i} className="text-secondary" />;
+      })
+    };
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -120,6 +41,12 @@ const ProductList = () => {
         
         if (Array.isArray(productsRes.data)) {
           setProducts(productsRes.data);
+          // Initialize stable ratings
+          const ratings = {};
+          productsRes.data.forEach(product => {
+            ratings[product._id] = generateStableRating(product._id);
+          });
+          setProductRatings(ratings);
         } else {
           console.error("Unexpected products data:", productsRes.data);
           setProducts([]);
@@ -137,11 +64,10 @@ const ProductList = () => {
 
   const fetchCartItems = async () => {
     const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("userData");
-    if (!token || !userId) return [];
+    if (!token) return [];
 
     try {
-      const res = await axios.get(`${API_URL}cart/addToCart?userId=${userId}`, {
+      const res = await axios.get(`${API_URL}cart/addToCart`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCartItems(res.data.data || []);
@@ -157,43 +83,63 @@ const ProductList = () => {
     const token = localStorage.getItem("token");
 
     if (!userId || !token) {
-      setPendingProductId(productId);
-      setShowAuthModal(true);
+      toast.info("Please login to add items to cart", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      return navigate("/login");
+    }
+
+    if (cartItems.some(item => item.productId._id === productId)) {
+      toast.warn("This item is already in your cart!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
       return;
     }
 
-    if (cartItems.some(item => item.productId?._id === productId)) return;
+    setAddingToCart(productId);
 
-    setAddingToCart(true);
     try {
       await axios.post(
         `${API_URL}cart/add`,
-        { productId, quantity: 1 },
+        { userId, productId, quantity: 1 },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       await fetchCartItems();
+      toast.success("Item successfully added to your cart!", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
     } catch (error) {
       console.error("Error adding to cart:", error);
-      alert("Failed to add item to cart");
+      toast.error("Failed to add item to cart. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
     } finally {
-      setAddingToCart(false);
+      setAddingToCart(null);
     }
-  };
-
-  const handleAuthConfirm = () => {
-    navigate("/login", { 
-      state: { 
-        from: "product-list",
-        message: "Please login to add items to your cart",
-        returnUrl: window.location.pathname
-      } 
-    });
-    setShowAuthModal(false);
-  };
-
-  const handleAuthCancel = () => {
-    setShowAuthModal(false);
-    setPendingProductId(null);
   };
 
   const handleProductDetails = (id) => {
@@ -223,20 +169,10 @@ const ProductList = () => {
     return acc;
   }, {});
 
-  const generateRating = () => {
-    const rating = (Math.random() * 5).toFixed(1);
-    return {
-      value: rating,
-      stars: Array(5).fill(0).map((_, i) => {
-        if (i < Math.floor(rating)) return <StarFill key={i} className="text-warning" />;
-        if (i === Math.floor(rating) && rating % 1 >= 0.5) return <StarHalf key={i} className="text-warning" />;
-        return <StarFill key={i} className="text-secondary" />;
-      })
-    };
-  };
-
   return (
     <div className="product-list-container">
+      <ToastContainer />
+      
       {/* Hero Search Section */}
       <div className="hero-search-section">
         <div className="hero-content">
@@ -300,8 +236,8 @@ const ProductList = () => {
                 ref={(el) => (sliderRefs.current[category] = el)}
               >
                 {items.map(product => {
-                  const isInCart = cartItems.some(item => item.productId?._id === product._id);
-                  const rating = generateRating();
+                  const isInCart = cartItems.some(item => item.productId._id === product._id);
+                  const rating = productRatings[product._id] || { value: "0.0", stars: [] };
                   const discountPercent = product.oldPrice
                     ? Math.round((1 - product.price / product.oldPrice) * 100)
                     : 0;
@@ -352,12 +288,12 @@ const ProductList = () => {
                         </div>
                         
                         <button
-                          className={`add-to-cart-btn ${isInCart ? 'in-cart' : ''} ${addingToCart && pendingProductId === product._id ? 'adding' : ''}`}
+                          className={`add-to-cart-btn ${isInCart ? 'in-cart' : ''} ${addingToCart === product._id ? 'adding' : ''}`}
                           onClick={() => handleAddToCart(product._id)}
-                          disabled={isInCart || (addingToCart && pendingProductId === product._id)}
+                          disabled={isInCart || addingToCart === product._id}
                           aria-label={isInCart ? 'Added to cart' : 'Add to cart'}
                         >
-                          {addingToCart && pendingProductId === product._id ? (
+                          {addingToCart === product._id ? (
                             <span className="adding-text">Adding...</span>
                           ) : isInCart ? (
                             <>
@@ -389,24 +325,6 @@ const ProductList = () => {
             Clear Search
           </button>
         </div>
-      )}
-
-      {/* Auth Modal */}
-      {showAuthModal && (
-        <AuthPrompt>
-          <div className="auth-modal">
-            <h3>Login Required</h3>
-            <p>You need to login to add items to your cart. Would you like to login now?</p>
-            <div className="button-group">
-              <button className="login-btn" onClick={handleAuthConfirm}>
-                Login
-              </button>
-              <button className="cancel-btn" onClick={handleAuthCancel}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </AuthPrompt>
       )}
     </div>
   );
