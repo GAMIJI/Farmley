@@ -142,10 +142,10 @@
   justify-content: center;
   gap: 30px;
   flex-wrap: wrap;
-  margin: 40px 0;
+  /* margin: 40px 0; */
   padding: 20px 0;
-  border-top: 1px solid #eee;
-  border-bottom: 1px solid #eee;
+  border-top: 1px solid #695f5f;
+  border-bottom: 1px solid #695f5f;
 }
 
 .benefit-item {

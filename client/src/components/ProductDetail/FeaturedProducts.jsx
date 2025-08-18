@@ -137,7 +137,7 @@ const FeaturedProducts = () => {
   return (
     <div style={{
       margin: '0 auto',
-      padding: '40px 20px',
+      padding: '25px 20px',
       fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
       position: 'relative'
     }}>
@@ -149,7 +149,7 @@ const FeaturedProducts = () => {
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: '40px',
-        flexWrap: 'wrap'
+        // flexWrap: 'wrap'
       }}>
         <h2 style={{
           fontSize: '2rem',
@@ -170,7 +170,7 @@ const FeaturedProducts = () => {
 
         <button
           style={{
-            padding: '12px 24px',
+            padding: '2px 12px',
             background: 'white',
             color: '#6e8efb',
             border: '2px solid #6e8efb',
@@ -178,7 +178,7 @@ const FeaturedProducts = () => {
             fontWeight: '600',
             cursor: 'pointer',
             transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
-            marginTop: '15px',
+            marginTop: '8px',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',

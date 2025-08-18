@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StarFill, Clock, Truck, ShieldCheck } from 'react-bootstrap-icons';
+import { StarFill, Clock, Truck, ShieldCheck, BorderBottom } from 'react-bootstrap-icons';
 
 export const OfferPage = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -343,6 +343,9 @@ export const OfferPage = () => {
         background: '#f9f9f9',
         borderRadius: '12px',
         marginTop: '40px',
+          BorderTop: '1px solid #695f5f',
+          BorderBottom: '1px solid #695f5f',
+  // border-bottom: 1px solid #695f5f,
         flexDirection: isMobile && window.innerWidth <= 480 ? 'column' : 'row'
       }}>
         <div style={{
